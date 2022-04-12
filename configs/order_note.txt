@@ -1,4 +1,5 @@
 实验一：./tools/dist_train.sh configs/experiment1-5.py 4 --validate --seed 42 --deterministic
 实验二：./tools/dist_train.sh configs/experiment2-17.py 4 --validate --seed 42 --deterministic
-实验三：./tools/dist_train.sh configs/experiment3-34.py 4 --validate --seed 42 --deterministic
-实验四：CUDA_VISIBLE_DEVICES=0,2,3 PORT=29501 ./tools/dist_train.sh configs/NSNR-linear5.py 3 --validate --seed 42 --deterministic
+实验一3：./tools/dist_train.sh configs/experiment3-34.py 4 --validate --seed 42 --deterministic
+实验一4：CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29501 ./tools/dist_train.sh configs/experiment4-5.py 4 --validate --seed 42 --deterministic
+实验二：bash linear5.sh
