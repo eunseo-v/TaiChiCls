@@ -22,8 +22,13 @@ def pt_confmat_info_60():
     return class_dict
 
 def pt_confmat_info_10():
-    items_10 = ['Preparation','Grasp Bird’s Tail','Single Whip','Cross Hand','Cloudy Hand','Sea Bottom Needle',
-    'Fan through Back','Oblique Flying Gesture','Parry and Punch','Stepping Back Monkey']
+    items_10 = [
+        'Preparation', 'Grasp Bird\'s tail', 'Single Whip',
+        'Lift up Hand', 'White Crane Spread its Wings',
+        'Brush Knee and Twist Step', 'Hold the Lute',
+        'Pulling,Blocking and Pounding', 'Apparent Close Up',
+        'Cross Hands'
+    ]
     class_dict = dict(
         zip(range(10), items_10)
     )

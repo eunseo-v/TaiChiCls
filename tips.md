@@ -37,3 +37,7 @@
     + -1：not freezing any parameters
     + ≥0：就可以冻结stem layer中的3DCNN的权重
     + 大于0的整数i: 冻结res stage 1到res stage i的权重
+
+### Test.py的编写
+* 记录测试样本的标签类别和实际类别
+* 保存样本输出的特征，t-SNE可视化，所以我需要模型输出FC层前的输出，或者就用最后的输出，先实现

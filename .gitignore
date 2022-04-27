@@ -1,4 +1,5 @@
 /data
-/model_pth/*
+*.pth
+*.pkl
 # 不理解为什么不好使，非要用git add -f 才能添加
 !/model_pth/5part_ntu60_xsub_kp_0331/epoch_24.pth 

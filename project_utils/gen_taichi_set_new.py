@@ -7,6 +7,7 @@ os.sys.path.append(
 import numpy as np
 import random
 import math
+import argparse
 from mmcv import dump, load
 from einops import rearrange
 
@@ -155,7 +156,7 @@ def taichi_skeleton_annotation(skeleton, shear = False, rotate = False,
             2) 减去三个轴的最小值
             3) 乘以一个倍数，之前的数值是4，可以尝试更大的值
             4) 加上一个余量值，之前的数值为100
-            5) 判断像素点的最大值是否在边界中(1920, 1080)
+            5) 判断像素点的最大值是否在边界中(1920, 1920)
         Args:
             skeleton: dict{
                 'name': AXXXRXXXSXXX
@@ -165,8 +166,8 @@ def taichi_skeleton_annotation(skeleton, shear = False, rotate = False,
             annotation: dict{
                 'frame_dir': name,
                 'label': int,
-                'img_shape': (1080, 1920), # [h,w]
-                'original_shape': (1080, 1920),
+                'img_shape': (1920, 1920), # [h,w]
+                'original_shape': (1920, 1920),
                 'total_frames': int,
                 'keypoint': np.ndarray [N=1, T, V, C=2],
                 'keypoint_score': [N=1, T, V]
@@ -204,7 +205,7 @@ def taichi_skeleton_annotation(skeleton, shear = False, rotate = False,
     # 4) 加上一个余量值
     margin_value = 100
     joints = joints + margin_value
-    assert joints[...,0].max()<1440 # width max
+    assert joints[...,0].max()<1920 # width max
     assert joints[...,1].max()<1920 # height max
     anno = dict()
     anno['keypoint'] = joints[..., :2] # [N=1, T, V, C=2]
@@ -213,16 +214,19 @@ def taichi_skeleton_annotation(skeleton, shear = False, rotate = False,
         dtype = np.float32
     )
     anno['frame_dir'] = sample_name
-    anno['img_shape'] = (1920, 1440) # [height, width]
-    anno['original_shape'] = (1920, 1440) # [height, width]
+    anno['img_shape'] = (1920, 1920) # [height, width]
+    anno['original_shape'] = (1920, 1920) # [height, width]
     anno['total_frames'] = joints.shape[1]
     anno['label'] = int(sample_name.split('A')[1][:3]) - 1
     return anno    
     
 
-def taichi_aug_method(random_seed, shear = False, rotate = False, rotate_angle_list = None, shear_angle_list = None):
+def taichi_aug_method(
+    folder_name, random_seed, test_ratio, aug_rate,
+    shear = False, rotate = False, rotate_angle_list = None, shear_angle_list = None
+):
     # 固定的random_seed防止收到样本的干扰
-    taichi_raw_rel_path = 'data/taichi/action.npy'
+    taichi_raw_rel_path = 'data/taichi/action_mod.npy'
     project_folder_path = os.path.abspath('.')[
         :os.path.abspath('.').find('myposec3d') + len('myposec3d')
     ]
@@ -241,7 +245,7 @@ def taichi_aug_method(random_seed, shear = False, rotate = False, rotate_angle_l
         sample_length = len(taichi_np_dict[key]) # 一类数据的样本数
         train_offset, test_offset = random_train_test_split(
             length = sample_length,
-            test_ratio = 0.7,
+            test_ratio = test_ratio,
             random_seed = random_seed
         ) # 用来测试数据预处理的作用，固定test_ratio和random_seed
         train_samples = [
@@ -255,7 +259,7 @@ def taichi_aug_method(random_seed, shear = False, rotate = False, rotate_angle_l
                 train_sample_aug(
                     key = key, repeat_idx = repeat_idx,
                     train_sample = np.array(train_sample, dtype = np.float32),
-                    train_aug = 4
+                    train_aug = aug_rate
                 )
             ) # list train_aug_sample的每一个元素是一个dict{'name': 'AXXXRXXXSXXX', 'data': [V=72, C=3, T=64]}
         # 测试集不需要扩增，只需要记录即可
@@ -293,17 +297,17 @@ def taichi_aug_method(random_seed, shear = False, rotate = False, rotate_angle_l
         )
     # 第三步保存样本到文件
     if shear == True and rotate == True:
-        folder_name = 'WSWR'
+        config_name = 'WSWR'
     elif shear == True and rotate == False:
-        folder_name = 'WSNR'
+        config_name = 'WSNR'
     elif shear == False and rotate == True:
-        folder_name = 'NSWR'
+        config_name = 'NSWR'
     elif shear == False and rotate == False:
-        folder_name = 'NSNR' 
+        config_name = 'NSNR' 
     else:
         raise ValueError('invalid shear or rotate')
     ds_taichi_folder_path = os.path.join(
-        project_folder_path, 'data/ds_taichi/TEST7AUG4', folder_name
+        project_folder_path, 'data/ds_taichi', folder_name, config_name
     )
     if not os.path.exists(ds_taichi_folder_path):
         os.makedirs(ds_taichi_folder_path)
@@ -320,47 +324,79 @@ def taichi_aug_method(random_seed, shear = False, rotate = False, rotate_angle_l
         )
     )
 
+
 if __name__ == '__main__':
-    # 一共有1-10类，一类有20个动作，为了测试数据预处理的作用
-    # 30%作为训练集，70%作为测试集，一个样本扩增倍数为4，TEST7AUG4
+    # 10类，20个动作，各种训练集比例都生成 10%, 30%, 50%, 70%
+    # 样本增广倍数2, 4, 8
+    # 根据训练集比例确定随机生成的旋转角度
     # baseline 只减去最小值--NSNR
     # 包含Shear Augmentation--WSNR
     # 包含Rotation Augmentation--NSWR
     # Shear + Rotation--WSWR 
     # 要保证旋转的角度确定，就先将随机的角度存储下来，输入到函数中
-    # 训练集数量20*10*0.3*4 = 240
-    # rotate操作需要240个角度，shear需要6*240个角度
-
-    train_samples = 240
-    rotate_angle_list = []
+    # 训练集数量20*10*训练集比例*样本增广倍数
+    # rotate操作需要的角度数n, shear需要的角度数6*n
+    parser = argparse.ArgumentParser(description='Tai Chi set generation')
+    parser.add_argument(
+        'train_ratio', type=float, choices=[0.1, 0.3, 0.5, 0.7],
+        help='training set ratio'
+    )
+    parser.add_argument(
+        'aug_rate', type=int, choices=[2, 4, 8],
+        help='aug rate of each sample'
+    )
+    parser.add_argument(
+        '--random_seed', type=int, default=42,
+        help= 'split random seed'
+    ) # 在shear和rotate时可以保证随机分割训练集和测试集的确定性
+    args = parser.parse_args()
+    # 最少训练样本数 20*10*0.1*2 = 40
+    # 最多训练样本数 20*10*0.7*8 = 1120
+    train_samples = int(20*10*args.train_ratio*args.aug_rate)
+    folder_name = 'TEST{}AUG{}'.format(
+        int((1-args.train_ratio)*10), args.aug_rate
+    )
+    rotate_angle_list = list()
     for i in range(train_samples):
-        rotate_angle_list.append(random.uniform(-60/180*np.pi, 60/180*np.pi))
-    rotate_angle_list = np.array(rotate_angle_list, dtype=np.float32) #240
-    shear_angle_list = np.zeros((train_samples, 2, 3), dtype = np.float32) # [240, 2, 3]
-    sap = 0.5
+        rotate_angle_list.append(random.uniform(-60/180*np.pi, 60/180*np.pi)) # 旋转角度值为60
+    rotate_angle_list = np.array(rotate_angle_list, dtype=np.float32) # 长度等于样本数
+    shear_angle_list= np.zeros((train_samples, 2, 3), dtype=np.float32) # [N, 2, 3]
+    sap = 0.5 # 幅度值为0.5
     for i in range(train_samples):
         shear_angle_list[i, :] = np.array([
             [random.uniform(-sap, sap), random.uniform(-sap, sap), random.uniform(-sap, sap)], 
             [random.uniform(-sap, sap), random.uniform(-sap, sap), random.uniform(-sap, sap)]
         ], dtype=np.float32)
-    
     taichi_aug_method(
+        folder_name = folder_name,
+        test_ratio = 1-args.train_ratio,
+        aug_rate = args.aug_rate, 
         random_seed=42, shear=True, rotate=True, 
         rotate_angle_list = rotate_angle_list,
         shear_angle_list = shear_angle_list
     ) # WSWR
     taichi_aug_method(
+        folder_name = folder_name,
+        test_ratio = 1-args.train_ratio,
+        aug_rate = args.aug_rate, 
         random_seed=42, shear=True, rotate=False,
         rotate_angle_list = rotate_angle_list,
         shear_angle_list = shear_angle_list
     ) # WSNR
     taichi_aug_method(
+        folder_name = folder_name,
+        test_ratio = 1-args.train_ratio,
+        aug_rate = args.aug_rate, 
         random_seed=42, shear=False, rotate=True,
         rotate_angle_list = rotate_angle_list,
         shear_angle_list = shear_angle_list
     ) # NSWR
     taichi_aug_method(
+        folder_name = folder_name,
+        test_ratio = 1-args.train_ratio,
+        aug_rate = args.aug_rate, 
         random_seed=42, shear=False, rotate=False,
         rotate_angle_list = rotate_angle_list,
         shear_angle_list = shear_angle_list
     ) # NSNR
+    

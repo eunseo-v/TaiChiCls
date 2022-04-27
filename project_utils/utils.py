@@ -3,6 +3,26 @@ import matplotlib.pyplot as plt
 import itertools
 import os
 
+def draw_pic(datas, labs, name='1.jpg'):
+    # 注释内容为加图例
+    plt.figure()
+    plt.cla()
+    unque_labs = np.unique(labs)
+    colors = [plt.cm.Spectral(each)
+        for each in np.linspace(0, 1, len(unque_labs))
+    ]
+    # p = []
+    # legends = []
+    for i in range(len(unque_labs)):
+        index = np.where(labs == unque_labs[i])
+        pi = plt.scatter(
+            datas[index, 0], datas[index, 1], c = [colors[i]]
+        )
+    #     p.append(pi)
+    #     legends.append(unque_labs[i])
+    # plt.legend(p, legends)
+    plt.savefig(name)
+
 def plot_confusion_matrix(cm, classes, normalize = False, 
     title = 'Confusion matrix', cmap = plt.cm.Blues):
     """
@@ -20,7 +40,7 @@ def plot_confusion_matrix(cm, classes, normalize = False,
     if len(classes) == 60:
         fig, ax = plt.subplots(figsize=(50, 50))
     elif len(classes) == 10:
-        fig, ax = plt.subplots(figsize=(15, 15))
+        fig, ax = plt.subplots(figsize=(15, 10)) # [width, height]
     else:
         fig, ax = plt.subplots(figsize=(20, 20))
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)

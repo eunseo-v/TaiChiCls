@@ -90,10 +90,33 @@ if __name__ == '__main__':
     project_folder_path = os.path.abspath('.')[
         :os.path.abspath('.').find('myposec3d') + len('myposec3d')
     ]
-    aug_method= 'WSWR' # NSNR, NSWR, WSNR, WSWR
+    aug_method= 'NSNR' # NSNR, NSWR, WSNR, WSWR
     data_path = os.path.join(
-        project_folder_path, 'data/ds_taichi/TEST7AUG4/{}/train_data.pkl'.format(aug_method)
+        project_folder_path, 'data/ds_taichi/TEST7AUG4/{}/test_data.pkl'.format(aug_method)
     )
+    taichi_list = [
+        'Preparation', 'Grasp Birds Tail', 'Single Whip', 'Cross Hand',
+        'Cloudy Hand', 'Sea Bottom Needle', 'Fan through Back',
+        'Oblique Flying Gesture', 'Parry and Punch', 'Stepping back Monkey'
+    ]
+    # 想看看每一类的训练集样本
+    all_anno_dict = load(data_path)
+    # find_class = 'A001'
+    find_class = 'A005R020'
+    for i in range(len(all_anno_dict)):
+        # if all_anno_dict[-i]['frame_dir'][0:4] == find_class:
+        if all_anno_dict[-i]['frame_dir'] == find_class:
+            anno = all_anno_dict[-i]
+            process_anno = get_pseudo_heatmap(anno, flag='limb')
+            limb_mapvis = vis_heatmaps(process_anno['imgs'])
+            limb_mapvis = [add_label(f, taichi_list[int(find_class[1:4])-1]) for f in limb_mapvis]
+            vid = mpy.ImageSequenceClip(limb_mapvis, fps = 30)
+            vid.write_videofile(
+                os.path.join(project_folder_path, 'test_model', '{}-{}.mp4'.format(aug_method, process_anno['frame_dir']))
+            )
+            break
+
+    ''' 看某一个样本
     anno = load(data_path)[10] # 一个样本
     process_anno = get_pseudo_heatmap(anno, flag = 'limb')
     limb_mapvis = vis_heatmaps(process_anno['imgs'])
@@ -103,3 +126,5 @@ if __name__ == '__main__':
         os.path.join(project_folder_path, 'test_model', '{}-{}.mp4'.format(aug_method, process_anno['frame_dir']))
     )
     pass
+    '''
+    

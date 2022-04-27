@@ -1,0 +1,5 @@
+{
+ "top1_acc": 0.99,
+ "top5_acc": 1.0,
+ "mean_class_accuracy": 0.99
+}

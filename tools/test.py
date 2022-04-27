@@ -1,23 +1,34 @@
-# Copyright (c) OpenMMLab. All rights reserved.
-import argparse
-import os
-import os.path as osp
-import warnings
-from collections import OrderedDict
-import numpy as np
+'''
+    my taichi test, DDP is not allowed
+    需要完成能够获取网络的中间层的输出
+    参照mmaction/utils/gradcam_utils.py的GradCAM类
+    编写钩子函数，如何注册，数据输入时，记录中间的输出
+    可选输出内容：
+        results.pkl 测试集样本的分类概率和样本名 'outputs','sample_names'
+        test_metric.json 测试集的评价指标 'top_k_accuracy', 'mean_class_accuracy'
+        confusion_matrix.png  confusion_matrix.csv 混淆矩阵
+        wrong_sample_statistics.json 分类错误的测试样本
+        t_sne_vis_out.pkl 中间层的输出和对应label 'target_outputs', 'target_labels'
+        t_sne_vis.png 特征层的t-SNE可视化结果
+'''
 import mmcv
-import torch
-from mmcv import Config, DictAction, dump
-from mmcv.cnn import fuse_conv_bn
-from mmcv.fileio.io import file_handlers
-from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
-from mmcv.runner import get_dist_info, init_dist, load_checkpoint
-from mmcv.runner.fp16_utils import wrap_fp16_model
-
-from mmaction.datasets import build_dataloader, build_dataset
+from mmcv import Config, ProgressBar, dump
+from mmcv.parallel import MMDataParallel
+from mmcv.runner import load_checkpoint
+from mmaction.datasets import build_dataset, build_dataloader
 from mmaction.models import build_model
-from mmaction.utils import register_module_hooks
 from mmaction.core.evaluation.accuracy import confusion_matrix
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+
+import os
+import argparse
+import json
+import numpy as np
+import torch
+import pandas as pd
+from einops import repeat
+from collections import OrderedDict
 
 os.sys.path.append(
     os.path.abspath('.')[
@@ -25,108 +36,27 @@ os.sys.path.append(
     ]
 )
 
-from project_utils.dset_class_info import pt_confmat_info_60, pt_confmat_info_10
-from project_utils.utils import plot_confusion_matrix
-
-# TODO import test functions from mmcv and delete them from mmaction2
-try:
-    from mmcv.engine import multi_gpu_test, single_gpu_test
-except (ImportError, ModuleNotFoundError):
-    warnings.warn(
-        'DeprecationWarning: single_gpu_test, multi_gpu_test, '
-        'collect_results_cpu, collect_results_gpu from mmaction2 will be '
-        'deprecated. Please install mmcv through master branch.')
-    from mmaction.apis import multi_gpu_test, single_gpu_test
-
+from project_utils.dset_class_info import pt_confmat_info_10, pt_confmat_info_60
+from project_utils.utils import plot_confusion_matrix, draw_pic
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='MMAction2 test (and eval) a model')
-    parser.add_argument('config', help='test config file path')
-    parser.add_argument('checkpoint', help='checkpoint file')
-    parser.add_argument(
-        '--out',
-        default=None,
-        help='output result file in pkl/yaml/json format')
-    parser.add_argument(
-        '--metric_out',
-        default=None,
-        help = 'folder path of metric result'
+        description='my eval test py'
     )
     parser.add_argument(
-        '--fuse-conv-bn',
-        action='store_true',
-        help='Whether to fuse conv and bn, this will slightly increase'
-        'the inference speed')
+        'config', 
+        # '--config',
+        # default= './configs/NSNR-linear5.py',
+        help = 'configuration file path'
+    )
     parser.add_argument(
-        '--eval',
-        type=str,
-        nargs='+',
-        help='evaluation metrics, which depends on the dataset, e.g.,'
-        ' "top_k_accuracy", "mean_class_accuracy" for video dataset')
-    parser.add_argument(
-        '--gpu-collect',
-        action='store_true',
-        help='whether to use gpu to collect results')
-    parser.add_argument(
-        '--tmpdir',
-        help='tmp directory used for collecting results from multiple '
-        'workers, available when gpu-collect is not specified')
-    parser.add_argument(
-        '--options',
-        nargs='+',
-        action=DictAction,
-        default={},
-        help='custom options for evaluation, the key-value pair in xxx=yyy '
-        'format will be kwargs for dataset.evaluate() function (deprecate), '
-        'change to --eval-options instead.')
-    parser.add_argument(
-        '--eval-options',
-        nargs='+',
-        action=DictAction,
-        default={},
-        help='custom options for evaluation, the key-value pair in xxx=yyy '
-        'format will be kwargs for dataset.evaluate() function')
-    parser.add_argument(
-        '--cfg-options',
-        nargs='+',
-        action=DictAction,
-        default={},
-        help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. For example, '
-        "'--cfg-options model.backbone.depth=18 model.backbone.with_cp=True'")
-    parser.add_argument(
-        '--average-clips',
-        choices=['score', 'prob', None],
-        default=None,
-        help='average type when averaging test clips')
-    parser.add_argument(
-        '--launcher',
-        choices=['none', 'pytorch', 'slurm', 'mpi'],
-        default='none',
-        help='job launcher')
-    parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument(
-        '--onnx',
-        action='store_true',
-        help='Whether to test with onnx model or not')
-    parser.add_argument(
-        '--tensorrt',
-        action='store_true',
-        help='Whether to test with TensorRT engine or not')
+        'checkpoint',
+        # '--checkpoint',
+        # default = './model_pth/NSNR-linear5_xsub_kp_0409/epoch_15.pth',
+        help = 'pretrained model path'
+    )
     args = parser.parse_args()
-    if 'LOCAL_RANK' not in os.environ:
-        os.environ['LOCAL_RANK'] = str(args.local_rank)
-
-    if args.options and args.eval_options:
-        raise ValueError(
-            '--options and --eval-options cannot be both '
-            'specified, --options is deprecated in favor of --eval-options')
-    if args.options:
-        warnings.warn('--options is deprecated in favor of --eval-options')
-        args.eval_options = args.options
     return args
-
 
 def turn_off_pretrained(cfg):
     # recursively find all pretrained in the model config,
@@ -139,315 +69,240 @@ def turn_off_pretrained(cfg):
         if isinstance(sub_cfg, dict):
             turn_off_pretrained(sub_cfg)
 
+class Infer_With_Hook:
+    '''
+        得到每一组输入的最终输出和target_layer_name的输出
+        如果要记录中间层的输出，在test_pipeline的double设置成False，要不然维度会有问题
+    '''
+    def __init__(self, model, target_layer_name):
+        self.model = MMDataParallel(model, device_ids = [0])
+        self.model.eval()
+        self.final_output = []
+        self.target_output = [] # 用来存储中间层的输出
+        self.target_label = [] # 用来存储中间层的输出对应的label, t-SNE可视化使用
+        self._register_hooks(target_layer_name)
+    
+    def _register_hooks(self, layer_name):
+        '''
+            Register forward hook to a layer, 
+            given layer_name to obtain activations
+            eg: layer_name 'cls_head/avg_pool'的输出为B*double*num_clips
+        '''
+        def get_activations(module, input, output):
+            self.target_output.extend(output.clone().detach().cpu().squeeze().numpy()) # [B*num_segs, C]
+        layer_ls = layer_name.split('/')
+        prev_module = self.model.module
+        for layer in layer_ls:
+            prev_module = prev_module._modules[layer]
+        target_layer = prev_module
+        target_layer.register_forward_hook(get_activations)
+        pass
 
-def inference_pytorch(args, cfg, distributed, data_loader):
-    """Get predictions by pytorch models."""
-    if args.average_clips is not None:
-        # You can set average_clips during testing, it will override the
-        # original setting
-        if cfg.model.get('test_cfg') is None and cfg.get('test_cfg') is None:
-            cfg.model.setdefault('test_cfg',
-                                 dict(average_clips=args.average_clips))
-        else:
-            if cfg.model.get('test_cfg') is not None:
-                cfg.model.test_cfg.average_clips = args.average_clips
-            else:
-                cfg.test_cfg.average_clips = args.average_clips
+    def __call__(self, data_loader):
+        dataset = data_loader.dataset
+        prog_bar = ProgressBar(len(dataset))
+        for data in data_loader:
+            num_segs = data['imgs'].shape[1] # double*num_clips
+            self.target_label.extend(
+                repeat(
+                    data['label'], 'b -> (b m)',
+                    m = num_segs
+                ) # 正确的数据重复方式
+            )
+            with torch.no_grad():
+                # 因为注册了钩子，也能执行get_activations
+                result = self.model(return_loss=False, **data) 
+            self.final_output.extend(result)
+            batch_size = len(next(iter(data.values())))
+            for _ in range(batch_size):
+                prog_bar.update()
 
-    # remove redundant pretrain steps for testing
+
+def inference_pytorch(cfg, data_loader):
+    '''
+        Get predictions by pytorch models.
+    '''
     turn_off_pretrained(cfg.model)
-
     # build the model and load checkpoint
     model = build_model(
-        cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
-
-    if len(cfg.module_hooks) > 0:
-        register_module_hooks(model, cfg.module_hooks)
-
-    fp16_cfg = cfg.get('fp16', None)
-    if fp16_cfg is not None:
-        wrap_fp16_model(model)
-    load_checkpoint(model, args.checkpoint, map_location='cpu')
-
-    if args.fuse_conv_bn:
-        model = fuse_conv_bn(model)
-
-    if not distributed:
-        model = MMDataParallel(model, device_ids=[0])
-        outputs = single_gpu_test(model, data_loader)
-    else:
-        model = MMDistributedDataParallel(
-            model.cuda(),
-            device_ids=[torch.cuda.current_device()],
-            broadcast_buffers=False)
-        outputs = multi_gpu_test(model, data_loader, args.tmpdir,
-                                 args.gpu_collect)
-
-    return outputs
-
-
-def inference_tensorrt(ckpt_path, distributed, data_loader, batch_size):
-    """Get predictions by TensorRT engine.
-
-    For now, multi-gpu mode and dynamic tensor shape are not supported.
-    """
-    assert not distributed, \
-        'TensorRT engine inference only supports single gpu mode.'
-    import tensorrt as trt
-    from mmcv.tensorrt.tensorrt_utils import (torch_dtype_from_trt,
-                                              torch_device_from_trt)
-
-    # load engine
-    with trt.Logger() as logger, trt.Runtime(logger) as runtime:
-        with open(ckpt_path, mode='rb') as f:
-            engine_bytes = f.read()
-        engine = runtime.deserialize_cuda_engine(engine_bytes)
-
-    # For now, only support fixed input tensor
-    cur_batch_size = engine.get_binding_shape(0)[0]
-    assert batch_size == cur_batch_size, \
-        ('Dataset and TensorRT model should share the same batch size, '
-         f'but get {batch_size} and {cur_batch_size}')
-
-    context = engine.create_execution_context()
-
-    # get output tensor
-    dtype = torch_dtype_from_trt(engine.get_binding_dtype(1))
-    shape = tuple(context.get_binding_shape(1))
-    device = torch_device_from_trt(engine.get_location(1))
-    output = torch.empty(
-        size=shape, dtype=dtype, device=device, requires_grad=False)
-
-    # get predictions
-    results = []
-    dataset = data_loader.dataset
-    prog_bar = mmcv.ProgressBar(len(dataset))
-    for data in data_loader:
-        bindings = [
-            data['imgs'].contiguous().data_ptr(),
-            output.contiguous().data_ptr()
-        ]
-        context.execute_async_v2(bindings,
-                                 torch.cuda.current_stream().cuda_stream)
-        results.extend(output.cpu().numpy())
-        batch_size = len(next(iter(data.values())))
-        for _ in range(batch_size):
-            prog_bar.update()
-    return results
-
-
-def inference_onnx(ckpt_path, distributed, data_loader, batch_size):
-    """Get predictions by ONNX.
-
-    For now, multi-gpu mode and dynamic tensor shape are not supported.
-    """
-    assert not distributed, 'ONNX inference only supports single gpu mode.'
-
-    import onnx
-    import onnxruntime as rt
-
-    # get input tensor name
-    onnx_model = onnx.load(ckpt_path)
-    input_all = [node.name for node in onnx_model.graph.input]
-    input_initializer = [node.name for node in onnx_model.graph.initializer]
-    net_feed_input = list(set(input_all) - set(input_initializer))
-    assert len(net_feed_input) == 1
-
-    # For now, only support fixed tensor shape
-    input_tensor = None
-    for tensor in onnx_model.graph.input:
-        if tensor.name == net_feed_input[0]:
-            input_tensor = tensor
-            break
-    cur_batch_size = input_tensor.type.tensor_type.shape.dim[0].dim_value
-    assert batch_size == cur_batch_size, \
-        ('Dataset and ONNX model should share the same batch size, '
-         f'but get {batch_size} and {cur_batch_size}')
-
-    # get predictions
-    sess = rt.InferenceSession(ckpt_path)
-    results = []
-    dataset = data_loader.dataset
-    prog_bar = mmcv.ProgressBar(len(dataset))
-    for data in data_loader:
-        imgs = data['imgs'].cpu().numpy()
-        onnx_result = sess.run(None, {net_feed_input[0]: imgs})[0]
-        results.extend(onnx_result)
-        batch_size = len(next(iter(data.values())))
-        for _ in range(batch_size):
-            prog_bar.update()
-    return results
-
+        cfg.model, train_cfg=None,
+        test_cfg = cfg.get('test_cfg')
+    )
+    # 此时 model._modules['backbone']._modules['conv1']._modules['conv']._parameters['weight'].device = 'cpu'
+    load_checkpoint(model, cfg.checkpoint, map_location='cpu')
+    # 测试集验证，加上钩子函数，得到cls_head/avg_pool层的输出
+    test_taichi = Infer_With_Hook(model, target_layer_name='cls_head/avg_pool')
+    test_taichi(data_loader=data_loader)
+    return {
+        'output': test_taichi.final_output,
+        'target_output': test_taichi.target_output,
+        'target_label': test_taichi.target_label
+    }
 
 def main():
     args = parse_args()
-    
-    if args.tensorrt and args.onnx:
-        raise ValueError(
-            'Cannot set onnx mode and tensorrt mode at the same time.')
-
     cfg = Config.fromfile(args.config)
-    
-    cfg.merge_from_dict(args.cfg_options)
-
-    # Load output_config from cfg
-    output_config = cfg.get('output_config', {})
-    if args.out:
-        # Overwrite output_config from args.out
-        output_config = Config._merge_a_into_b(
-            dict(out=args.out), output_config)
-    # Load eval_config from cfg
-    eval_config = cfg.get('eval_config', {})
-    if args.eval:
-        # Overwrite eval_config from args.eval
-        eval_config = Config._merge_a_into_b(
-            dict(metrics=args.eval), eval_config)
-    if args.eval_options:
-        # Add options from args.eval_options
-        eval_config = Config._merge_a_into_b(args.eval_options, eval_config)
-    if args.metric_out:
-        eval_config = Config._merge_a_into_b(
-            dict(metric_out=args.metric_out), eval_config
-        )
-    # print(eval_config)
-    assert output_config or eval_config, \
-        ('Please specify at least one operation (save or eval the '
-         'results) with the argument "--out" or "--eval"')
-
-    dataset_type = cfg.data.test.type
-    if output_config.get('out', None):
-        if 'output_format' in output_config:
-            # ugly workround to make recognition and localization the same
-            warnings.warn(
-                'Skip checking `output_format` in localization task.')
-        else:
-            out = output_config['out']
-            # make sure the dirname of the output path exists
-            mmcv.mkdir_or_exist(osp.dirname(out))
-            _, suffix = osp.splitext(out)
-            if dataset_type == 'AVADataset':
-                assert suffix[1:] == 'csv', ('For AVADataset, the format of '
-                                             'the output file should be csv')
-            else:
-                assert suffix[1:] in file_handlers, (
-                    'The format of the output '
-                    'file should be json, pickle or yaml')
-
-    # set cudnn benchmark
-    if cfg.get('cudnn_benchmark', False):
-        torch.backends.cudnn.benchmark = True
-    cfg.data.test.test_mode = True
-
-    # init distributed env first, since logger depends on the dist info.
-    if args.launcher == 'none':
-        distributed = False
+    if args.checkpoint:
+        cfg.setdefault('checkpoint', args.checkpoint)
     else:
-        distributed = True
-        init_dist(args.launcher, **cfg.dist_params)
-
+        raise ValueError('plz infer the model checkpoint')
+    output_config = cfg.get('output_config', {})
+    eval_config = cfg.get('eval_config', {})
     # The flag is used to register module's hooks
     cfg.setdefault('module_hooks', [])
-
     # build the dataloader
-    dataset = build_dataset(cfg.data.test, dict(test_mode=True))
+    dataset = build_dataset(
+        cfg.data.test, 
+        dict(test_mode = True)
+    )
     dataloader_setting = dict(
         videos_per_gpu=cfg.data.get('videos_per_gpu', 1),
         workers_per_gpu=cfg.data.get('workers_per_gpu', 1),
-        dist=distributed,
+        dist=False,
         shuffle=False)
-    dataloader_setting = dict(dataloader_setting,
-                              **cfg.data.get('test_dataloader', {}))
+    dataloader_setting = dict(
+        dataloader_setting,
+        **cfg.data.get('test_dataloader', {})
+    )
     data_loader = build_dataloader(dataset, **dataloader_setting)
+    # outputs.keys() ['output', 'target_output', 'target_label']
+    outputs = inference_pytorch(cfg=cfg, data_loader= data_loader)
+    
+    '''
+        想存储的数据内容:
+        1. 对测试集的各类分类概率
+        2. 测试集各样本的名称，1,2可以存成一个pkl文件   results.pkl
+        3. 中间层的特征输出和对应标签，存成一个pkl文件  t_sne_vis_out.pkl
+        可视化内容:
+        1. 混淆矩阵                 confusion_matrix.png
+        2. 哪些样本分错了            wrong_sample_statistics.json
+        3. 中间层的特征输出的可视化   t_sne_vis.png
+    '''
+    if output_config.get('out', None):
+        out_path = output_config['out']
+        mmcv.mkdir_or_exist(os.path.dirname(out_path))
+        sample_names = [
+            ann['frame_dir'] for ann in dataset.video_infos
+        ] # 每个样本的样本名
+        out = {
+            'outputs': outputs['output'],
+            'sample_names': sample_names
+        }
+        dump(
+            out, out_path
+        ) # 测试集的各类分类概率和样本名称
+    if eval_config:
+        # 对于top_k_acc和mean_class_acc，按照dataset.evaluate计算
+        # confusion_matrix计算混淆矩阵，并且统计错误的样本
+        # t_sne_vis，先将数据保存，然后通过PCA降维后，t-sne可视化
+        mmcv.mkdir_or_exist(eval_config.get('metric_out'))
+        allowed_metrics = [
+            'top_k_accuracy', 'mean_class_accuracy', 
+            'confusion_matrix', 't_sne_vis'
+        ]
+        eval_metrics = eval_config.get('eval')
+        for metric in eval_metrics:
+            if metric not in allowed_metrics:
+                raise KeyError(f'metric {metric} is not supported')
+        eval_results = OrderedDict()
+        for metric in eval_metrics:
+            if (metric == 'top_k_accuracy') or (metric == 'mean_class_accuracy'):
+                eval_results_temp = dataset.evaluate(outputs['output'], metric)
+                for key in eval_results_temp.keys():
+                    eval_results[key] = eval_results_temp[key]
+            if metric == 'confusion_matrix':
+                gt_labels = [ann['label'] for ann in dataset.video_infos]
+                confusion_mat = confusion_matrix(
+                    y_pred=np.argmax(outputs['output'], axis=1),
+                    y_real = gt_labels
+                ).astype(float)
+                wrong_sample_statistics=dict() # 用于统计错误样本
+                if cfg.model.cls_head.num_classes == 60:
+                    class_dict_info = pt_confmat_info_60()
+                elif cfg.model.cls_head.num_classes ==10:
+                    class_dict_info = pt_confmat_info_10()
+                else:
+                    raise ValueError(
+                        'invalid {cfg.model.cls_head.num_classes} datset class number'
+                    )
+                # 画混淆矩阵并保存
+                ax = plot_confusion_matrix(
+                    cm = confusion_mat,
+                    classes = class_dict_info.values(),
+                    normalize = False
+                )
+                fig = ax.get_figure()
+                fig.savefig(
+                    os.path.join(
+                        eval_config.get('metric_out'),
+                        'confusion_matrix.png'
+                    )
+                )
+                df = pd.DataFrame(
+                    data=confusion_mat,
+                    index = list(class_dict_info.values()),
+                    columns = list(class_dict_info.values())
+                )
+                df.to_csv(
+                    os.path.join(
+                        eval_config.get('metric_out'),
+                        'confusion_matrix.csv'
+                    )
+                )
+                # 记录错误的样本和类
+                sample_names = [
+                    ann['frame_dir'] for ann in dataset.video_infos
+                ] # 每个样本的样本名
+                pred_labels = np.argmax(outputs['output'], axis=1) # 预测值
+                labels = gt_labels # 真值
+                for i, name in enumerate(sample_names):
+                    if pred_labels[i] != labels[i]:
+                        wrong_sample_statistics.update(
+                            {name: '{} but wrong predicted as {}'.format(
+                                class_dict_info[labels[i]], 
+                                class_dict_info[pred_labels[i]]
+                            )}
+                        )
+                with open(
+                    os.path.join(
+                        eval_config.get('metric_out'),
+                        'wrong_sample_statistics.json'
+                    ), 'w'
+                ) as f:
+                    json.dump(wrong_sample_statistics, f, indent=1)                
+            if metric == 't_sne_vis':
+                vis_out = {
+                    'target_outputs':outputs['target_output'],
+                    'target_labels': outputs['target_label']
+                }
+                dump(
+                    vis_out,
+                    os.path.join(
+                        eval_config.get('metric_out'),
+                        't_sne_vis_out.pkl'
+                    )
+                )
+                pca = PCA(n_components=50, random_state=400)
+                tsne = TSNE(n_components=2, init='pca', n_iter=3000, random_state=400)
+                pca_datas = pca.fit_transform(
+                    np.array(outputs['target_output']) # [N, C]
+                ) # 可能会出现复数
+                tsne_datas = tsne.fit_transform(pca_datas.real)
+                draw_pic(
+                    datas= tsne_datas, labs = np.array(outputs['target_label']),
+                    name = os.path.join(
+                        eval_config.get('metric_out'),
+                        'pca50-t_sne_vis.png'
+                    )
+                )                
+        with open(
+            os.path.join(
+                eval_config.get('metric_out'),
+                'test_metric.json'
+            ), 'w'
+        ) as f:
+            json.dump(eval_results, f, indent=1)
+    pass
 
-    if args.tensorrt:
-        outputs = inference_tensorrt(args.checkpoint, distributed, data_loader,
-                                     dataloader_setting['videos_per_gpu'])
-    elif args.onnx:
-        outputs = inference_onnx(args.checkpoint, distributed, data_loader,
-                                 dataloader_setting['videos_per_gpu'])
-    else:
-        outputs = inference_pytorch(args, cfg, distributed, data_loader)
-
-    rank, _ = get_dist_info()
-    if rank == 0:
-        if output_config.get('out', None):
-            out = output_config['out']
-            print(f'\nwriting results to {out}')
-            dataset.dump_results(outputs, **output_config)
-            sample_name = [ann['frame_dir'] for ann in dataset.video_infos]
-            dump(
-                sample_name, 
-                os.path.join(
-                    eval_config.get('metric_out'),
-                    'sample_name.pkl'
-                )
-            )
-        if eval_config:
-            # 想法是对于top_k_accuracy和'mean_classs_accuracy'直接送入.evaluate函数
-            # 对于'confusion_matrix'直接将output和label提取然后计算保存
-            allowed_metrics = [
-                'top_k_accuracy', 'mean_class_accuracy', 'confusion_matrix'
-            ]
-            eval_metrics = eval_config.get('eval')
-            for metric in eval_metrics:
-                if metric not in allowed_metrics:
-                    raise KeyError(f'metric {metric} is not supported')
-            eval_results = OrderedDict()
-            gt_labels = [ann['label'] for ann in dataset.video_infos]
-            for metric in eval_metrics:
-                if (metric == 'top_k_accuracy') or (metric == 'mean_class_accuracy'):
-                    eval_results_temp = dataset.evaluate(outputs, metric)
-                    for key in eval_results_temp.keys():
-                        eval_results[key] = eval_results_temp[key]
-                if metric == 'confusion_matrix':
-                    confusion_mat = confusion_matrix(
-                        y_pred= np.argmax(outputs, axis=1),
-                        y_real= gt_labels
-                    ).astype(float)
-                    eval_results[metric] = confusion_mat
-                    if cfg.model.cls_head.num_classes == 60:
-                        class_dict_info = pt_confmat_info_60()
-                        ax = plot_confusion_matrix(
-                            cm = confusion_mat, 
-                            classes = class_dict_info.values(),
-                            normalize=False
-                        )
-                        fig = ax.get_figure()
-                        fig.savefig(
-                            os.path.join(
-                                eval_config.get('metric_out'),
-                                'confusion_matrix.png'
-                            )
-                        )
-                    elif cfg.model.cls_head.num_classes == 10:
-                        class_dict_info = pt_confmat_info_10()
-                        ax = plot_confusion_matrix(
-                            cm = confusion_mat,
-                            classes = class_dict_info.values(),
-                            normalize=False
-                        )
-                        fig = ax.get_figure()
-                        fig.savefig(
-                            os.path.join(
-                                eval_config.get('metric_out'),
-                                'confusion_matrix.png'
-                            )
-                        )
-                    else:
-                        raise ValueError('invalid {cfg.model.cls_head.num_classes} datset class number')
-            dump(
-                eval_results,
-                os.path.join(
-                    eval_config.get('metric_out'),
-                    'test_metrics.pkl'
-                )
-            )
-            dump(
-                eval_results,
-                os.path.join(
-                    eval_config.get('metric_out'),
-                    'test_metrics.json'
-                )
-            )
 if __name__ == '__main__':
     main()

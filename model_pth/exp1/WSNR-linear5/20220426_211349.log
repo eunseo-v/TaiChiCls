@@ -1,0 +1,785 @@
+2022-04-26 21:13:49,234 - mmaction - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.8.12 | packaged by conda-forge | (default, Oct 12 2021, 21:57:06) [GCC 9.4.0]
+CUDA available: True
+GPU 0,1,2,3: NVIDIA GeForce RTX 3090
+CUDA_HOME: /usr/local/cuda
+NVCC: Build cuda_11.1.TC455_06.29190527_0
+GCC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0
+PyTorch: 1.9.1+cu111
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.1.2 (Git Hash 98be7e8afa711dc9b66c8ff3504129cb82013cdb)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.1
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86
+  - CuDNN 8.0.5
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.1, CUDNN_VERSION=8.0.5, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.9.1, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, 
+
+TorchVision: 0.10.1+cu111
+OpenCV: 4.5.5
+MMCV: 1.4.2
+MMCV Compiler: GCC 7.3
+MMCV CUDA Compiler: 11.1
+MMAction2: 0.20.0+26392eb
+------------------------------------------------------------
+
+2022-04-26 21:13:49,234 - mmaction - INFO - Distributed training: True
+2022-04-26 21:13:51,132 - mmaction - INFO - Config: model = dict(
+    type='Recognizer3D',
+    backbone=dict(
+        type='ResNet3dSlowOnly',
+        depth=50,
+        pretrained=None,
+        in_channels=5,
+        base_channels=32,
+        num_stages=3,
+        out_indices=(2, ),
+        stage_blocks=(4, 6, 3),
+        conv1_stride_s=1,
+        pool1_stride_s=1,
+        inflate=(0, 1, 1),
+        spatial_strides=(2, 2, 2),
+        temporal_strides=(1, 1, 2),
+        dilations=(1, 1, 1),
+        frozen_stages=3),
+    cls_head=dict(
+        type='I3DHead',
+        in_channels=512,
+        num_classes=10,
+        spatial_type='avg',
+        dropout_ratio=0.5),
+    train_cfg=dict(),
+    test_cfg=dict(average_clips='prob'))
+dataset_type = 'PoseDataset'
+ann_file_train = 'data/ds_taichi/TEST9AUG4/WSNR/train_data.pkl'
+ann_file_val = 'data/ds_taichi/TEST9AUG4/WSNR/test_data.pkl'
+left = [
+    5, 6, 7, 8, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+    60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71
+]
+right = [
+    1, 2, 3, 4, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43
+]
+train_pipeline = [
+    dict(type='UniformSampleFrames', clip_len=48),
+    dict(type='PoseDecode'),
+    dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+    dict(type='Resize', scale=(-1, 64)),
+    dict(type='RandomResizedCrop', area_range=(0.56, 1.0)),
+    dict(type='Resize', scale=(56, 56), keep_ratio=False),
+    dict(
+        type='Flip',
+        flip_ratio=0.5,
+        left_kp=[
+            5, 6, 7, 8, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+            58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71
+        ],
+        right_kp=[
+            1, 2, 3, 4, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+            30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43
+        ]),
+    dict(
+        type='GenerateTaiChiPoseTarget',
+        sigma=0.6,
+        use_score=True,
+        with_kp=True,
+        with_limb=False),
+    dict(type='FormatShape', input_format='NCTHW'),
+    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs', 'label'])
+]
+val_pipeline = [
+    dict(type='UniformSampleFrames', clip_len=48, num_clips=1, test_mode=True),
+    dict(type='PoseDecode'),
+    dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+    dict(type='Resize', scale=(-1, 64)),
+    dict(type='CenterCrop', crop_size=64),
+    dict(
+        type='GenerateTaiChiPoseTarget',
+        sigma=0.6,
+        use_score=True,
+        with_kp=True,
+        with_limb=False),
+    dict(type='FormatShape', input_format='NCTHW'),
+    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs'])
+]
+test_pipeline = [
+    dict(
+        type='UniformSampleFrames', clip_len=48, num_clips=10, test_mode=True),
+    dict(type='PoseDecode'),
+    dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+    dict(type='Resize', scale=(-1, 64)),
+    dict(type='CenterCrop', crop_size=64),
+    dict(
+        type='GenerateTaiChiPoseTarget',
+        sigma=0.6,
+        use_score=True,
+        with_kp=True,
+        with_limb=False,
+        double=True,
+        left_kp=[
+            5, 6, 7, 8, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+            58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71
+        ],
+        right_kp=[
+            1, 2, 3, 4, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+            30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43
+        ]),
+    dict(type='FormatShape', input_format='NCTHW'),
+    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs'])
+]
+data = dict(
+    videos_per_gpu=8,
+    workers_per_gpu=4,
+    test_dataloader=dict(videos_per_gpu=4),
+    train=dict(
+        type='RepeatDataset',
+        times=20,
+        dataset=dict(
+            type='PoseDataset',
+            ann_file='data/ds_taichi/TEST9AUG4/WSNR/train_data.pkl',
+            data_prefix='',
+            pipeline=[
+                dict(type='UniformSampleFrames', clip_len=48),
+                dict(type='PoseDecode'),
+                dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+                dict(type='Resize', scale=(-1, 64)),
+                dict(type='RandomResizedCrop', area_range=(0.56, 1.0)),
+                dict(type='Resize', scale=(56, 56), keep_ratio=False),
+                dict(
+                    type='Flip',
+                    flip_ratio=0.5,
+                    left_kp=[
+                        5, 6, 7, 8, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+                        55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+                        69, 70, 71
+                    ],
+                    right_kp=[
+                        1, 2, 3, 4, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                        27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                        41, 42, 43
+                    ]),
+                dict(
+                    type='GenerateTaiChiPoseTarget',
+                    sigma=0.6,
+                    use_score=True,
+                    with_kp=True,
+                    with_limb=False),
+                dict(type='FormatShape', input_format='NCTHW'),
+                dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+                dict(type='ToTensor', keys=['imgs', 'label'])
+            ])),
+    val=dict(
+        type='PoseDataset',
+        ann_file='data/ds_taichi/TEST9AUG4/WSNR/test_data.pkl',
+        data_prefix='',
+        pipeline=[
+            dict(
+                type='UniformSampleFrames',
+                clip_len=48,
+                num_clips=1,
+                test_mode=True),
+            dict(type='PoseDecode'),
+            dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+            dict(type='Resize', scale=(-1, 64)),
+            dict(type='CenterCrop', crop_size=64),
+            dict(
+                type='GenerateTaiChiPoseTarget',
+                sigma=0.6,
+                use_score=True,
+                with_kp=True,
+                with_limb=False),
+            dict(type='FormatShape', input_format='NCTHW'),
+            dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+            dict(type='ToTensor', keys=['imgs'])
+        ]),
+    test=dict(
+        type='PoseDataset',
+        ann_file='data/ds_taichi/TEST9AUG4/WSNR/test_data.pkl',
+        data_prefix='',
+        pipeline=[
+            dict(
+                type='UniformSampleFrames',
+                clip_len=48,
+                num_clips=10,
+                test_mode=True),
+            dict(type='PoseDecode'),
+            dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+            dict(type='Resize', scale=(-1, 64)),
+            dict(type='CenterCrop', crop_size=64),
+            dict(
+                type='GenerateTaiChiPoseTarget',
+                sigma=0.6,
+                use_score=True,
+                with_kp=True,
+                with_limb=False,
+                double=True,
+                left_kp=[
+                    5, 6, 7, 8, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                    56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+                    71
+                ],
+                right_kp=[
+                    1, 2, 3, 4, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+                    28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42,
+                    43
+                ]),
+            dict(type='FormatShape', input_format='NCTHW'),
+            dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+            dict(type='ToTensor', keys=['imgs'])
+        ]))
+optimizer = dict(type='SGD', lr=1, momentum=0.9, weight_decay=0.0003)
+optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
+lr_config = dict(policy='CosineAnnealing', by_epoch=False, min_lr=0)
+total_epochs = 48
+checkpoint_config = dict()
+workflow = [('train', 1)]
+evaluation = dict(
+    interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], topk=(1, 5))
+log_config = dict(interval=40, hooks=[dict(type='TextLoggerHook')])
+output_config = dict(
+    out='./model_pth/exp1-new/WSNR-linear5/test_result/results.pkl')
+eval_config = dict(
+    metric_out='./model_pth/exp1-new/WSNR-linear5/test_result',
+    eval=[
+        'top_k_accuracy', 'mean_class_accuracy', 'confusion_matrix',
+        't_sne_vis'
+    ])
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+work_dir = './model_pth/exp1-new/WSNR-linear5'
+load_from = './model_pth/5part_ntu60_xsub_kp_0331/epoch_24.pth'
+resume_from = None
+find_unused_parameters = True
+gpu_ids = range(0, 4)
+omnisource = False
+module_hooks = []
+
+2022-04-26 21:13:51,133 - mmaction - INFO - Set random seed to 42, deterministic: True
+2022-04-26 21:13:51,211 - mmaction - INFO - 80 videos remain after valid thresholding
+2022-04-26 21:13:57,541 - mmaction - INFO - 180 videos remain after valid thresholding
+2022-04-26 21:13:57,543 - mmaction - INFO - load checkpoint from local path: ./model_pth/5part_ntu60_xsub_kp_0331/epoch_24.pth
+2022-04-26 21:13:57,568 - mmaction - WARNING - The model and loaded state dict do not match exactly
+
+size mismatch for cls_head.fc_cls.weight: copying a param with shape torch.Size([60, 512]) from checkpoint, the shape in current model is torch.Size([10, 512]).
+size mismatch for cls_head.fc_cls.bias: copying a param with shape torch.Size([60]) from checkpoint, the shape in current model is torch.Size([10]).
+2022-04-26 21:13:57,569 - mmaction - INFO - Start running, host: yl@83090-jin, work_dir: /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5
+2022-04-26 21:13:57,569 - mmaction - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) DistSamplerSeedHook                
+(NORMAL      ) DistEvalHook                       
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) DistEvalHook                       
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) DistEvalHook                       
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) DistSamplerSeedHook                
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2022-04-26 21:13:57,569 - mmaction - INFO - workflow: [('train', 1)], max: 48 epochs
+2022-04-26 21:13:57,570 - mmaction - INFO - Checkpoints will be saved to /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5 by HardDiskBackend.
+2022-04-26 21:14:29,346 - mmaction - INFO - Epoch [1][40/50]	lr: 9.993e-01, eta: 0:31:14, time: 0.794, data_time: 0.639, memory: 665, top1_acc: 0.2297, top5_acc: 0.6500, loss_cls: 58.4831, loss: 58.4831, grad_norm: 5.9048
+2022-04-26 21:15:00,552 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:15:00,553 - mmaction - INFO - 
+top1_acc	0.3500
+top5_acc	0.8333
+2022-04-26 21:15:00,553 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:15:00,553 - mmaction - INFO - 
+mean_acc	0.3500
+2022-04-26 21:15:00,604 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_1.pth.
+2022-04-26 21:15:00,604 - mmaction - INFO - Best top1_acc is 0.3500 at 1 epoch.
+2022-04-26 21:15:00,604 - mmaction - INFO - Epoch(val) [1][6]	top1_acc: 0.3500, top5_acc: 0.8333, mean_class_accuracy: 0.3500
+2022-04-26 21:15:33,119 - mmaction - INFO - Epoch [2][40/50]	lr: 9.966e-01, eta: 0:27:29, time: 0.813, data_time: 0.635, memory: 861, top1_acc: 0.4836, top5_acc: 0.9148, loss_cls: 20.9963, loss: 20.9963, grad_norm: 3.2351
+2022-04-26 21:16:03,116 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:16:03,117 - mmaction - INFO - 
+top1_acc	0.5722
+top5_acc	0.8500
+2022-04-26 21:16:03,117 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:16:03,118 - mmaction - INFO - 
+mean_acc	0.5722
+2022-04-26 21:16:03,119 - mmaction - INFO - The previous best checkpoint /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5/best_top1_acc_epoch_1.pth was removed
+2022-04-26 21:16:03,153 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_2.pth.
+2022-04-26 21:16:03,154 - mmaction - INFO - Best top1_acc is 0.5722 at 2 epoch.
+2022-04-26 21:16:03,154 - mmaction - INFO - Epoch(val) [2][6]	top1_acc: 0.5722, top5_acc: 0.8500, mean_class_accuracy: 0.5722
+2022-04-26 21:16:34,673 - mmaction - INFO - Epoch [3][40/50]	lr: 9.917e-01, eta: 0:25:46, time: 0.788, data_time: 0.619, memory: 861, top1_acc: 0.5367, top5_acc: 0.9336, loss_cls: 17.4243, loss: 17.4243, grad_norm: 3.0621
+2022-04-26 21:17:04,294 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:17:04,294 - mmaction - INFO - 
+top1_acc	0.5611
+top5_acc	0.9500
+2022-04-26 21:17:04,294 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:17:04,295 - mmaction - INFO - 
+mean_acc	0.5611
+2022-04-26 21:17:04,295 - mmaction - INFO - Epoch(val) [3][6]	top1_acc: 0.5611, top5_acc: 0.9500, mean_class_accuracy: 0.5611
+2022-04-26 21:17:36,130 - mmaction - INFO - Epoch [4][40/50]	lr: 9.848e-01, eta: 0:24:44, time: 0.796, data_time: 0.633, memory: 861, top1_acc: 0.6078, top5_acc: 0.9477, loss_cls: 14.2827, loss: 14.2827, grad_norm: 2.6807
+2022-04-26 21:18:06,551 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:18:06,552 - mmaction - INFO - 
+top1_acc	0.6167
+top5_acc	0.9444
+2022-04-26 21:18:06,552 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:18:06,553 - mmaction - INFO - 
+mean_acc	0.6167
+2022-04-26 21:18:06,554 - mmaction - INFO - The previous best checkpoint /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5/best_top1_acc_epoch_2.pth was removed
+2022-04-26 21:18:06,585 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_4.pth.
+2022-04-26 21:18:06,585 - mmaction - INFO - Best top1_acc is 0.6167 at 4 epoch.
+2022-04-26 21:18:06,585 - mmaction - INFO - Epoch(val) [4][6]	top1_acc: 0.6167, top5_acc: 0.9444, mean_class_accuracy: 0.6167
+2022-04-26 21:18:38,384 - mmaction - INFO - Epoch [5][40/50]	lr: 9.757e-01, eta: 0:23:54, time: 0.795, data_time: 0.622, memory: 861, top1_acc: 0.6039, top5_acc: 0.9523, loss_cls: 14.0109, loss: 14.0109, grad_norm: 2.7224
+2022-04-26 21:19:08,516 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:19:08,516 - mmaction - INFO - 
+top1_acc	0.6667
+top5_acc	0.9389
+2022-04-26 21:19:08,517 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:19:08,517 - mmaction - INFO - 
+mean_acc	0.6667
+2022-04-26 21:19:08,518 - mmaction - INFO - The previous best checkpoint /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5/best_top1_acc_epoch_4.pth was removed
+2022-04-26 21:19:08,547 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_5.pth.
+2022-04-26 21:19:08,547 - mmaction - INFO - Best top1_acc is 0.6667 at 5 epoch.
+2022-04-26 21:19:08,547 - mmaction - INFO - Epoch(val) [5][6]	top1_acc: 0.6667, top5_acc: 0.9389, mean_class_accuracy: 0.6667
+2022-04-26 21:19:40,786 - mmaction - INFO - Epoch [6][40/50]	lr: 9.646e-01, eta: 0:23:14, time: 0.806, data_time: 0.630, memory: 861, top1_acc: 0.6148, top5_acc: 0.9531, loss_cls: 11.8944, loss: 11.8944, grad_norm: 2.5813
+2022-04-26 21:20:10,285 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:20:10,286 - mmaction - INFO - 
+top1_acc	0.7500
+top5_acc	0.9333
+2022-04-26 21:20:10,286 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:20:10,287 - mmaction - INFO - 
+mean_acc	0.7500
+2022-04-26 21:20:10,288 - mmaction - INFO - The previous best checkpoint /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5/best_top1_acc_epoch_5.pth was removed
+2022-04-26 21:20:10,313 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_6.pth.
+2022-04-26 21:20:10,314 - mmaction - INFO - Best top1_acc is 0.7500 at 6 epoch.
+2022-04-26 21:20:10,314 - mmaction - INFO - Epoch(val) [6][6]	top1_acc: 0.7500, top5_acc: 0.9333, mean_class_accuracy: 0.7500
+2022-04-26 21:20:41,814 - mmaction - INFO - Epoch [7][40/50]	lr: 9.516e-01, eta: 0:22:31, time: 0.787, data_time: 0.636, memory: 861, top1_acc: 0.6266, top5_acc: 0.9398, loss_cls: 13.0443, loss: 13.0443, grad_norm: 2.6811
+2022-04-26 21:21:11,491 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:21:11,492 - mmaction - INFO - 
+top1_acc	0.5722
+top5_acc	0.9333
+2022-04-26 21:21:11,492 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:21:11,492 - mmaction - INFO - 
+mean_acc	0.5722
+2022-04-26 21:21:11,492 - mmaction - INFO - Epoch(val) [7][6]	top1_acc: 0.5722, top5_acc: 0.9333, mean_class_accuracy: 0.5722
+2022-04-26 21:21:42,853 - mmaction - INFO - Epoch [8][40/50]	lr: 9.366e-01, eta: 0:21:51, time: 0.784, data_time: 0.721, memory: 861, top1_acc: 0.6281, top5_acc: 0.9688, loss_cls: 10.5240, loss: 10.5240, grad_norm: 2.5641
+2022-04-26 21:22:13,009 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:22:13,010 - mmaction - INFO - 
+top1_acc	0.7389
+top5_acc	0.9444
+2022-04-26 21:22:13,010 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:22:13,010 - mmaction - INFO - 
+mean_acc	0.7389
+2022-04-26 21:22:13,010 - mmaction - INFO - Epoch(val) [8][6]	top1_acc: 0.7389, top5_acc: 0.9444, mean_class_accuracy: 0.7389
+2022-04-26 21:22:44,964 - mmaction - INFO - Epoch [9][40/50]	lr: 9.197e-01, eta: 0:21:15, time: 0.799, data_time: 0.748, memory: 861, top1_acc: 0.6164, top5_acc: 0.9570, loss_cls: 11.6507, loss: 11.6507, grad_norm: 2.6127
+2022-04-26 21:23:14,344 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:23:14,344 - mmaction - INFO - 
+top1_acc	0.6833
+top5_acc	0.9833
+2022-04-26 21:23:14,344 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:23:14,345 - mmaction - INFO - 
+mean_acc	0.6833
+2022-04-26 21:23:14,345 - mmaction - INFO - Epoch(val) [9][6]	top1_acc: 0.6833, top5_acc: 0.9833, mean_class_accuracy: 0.6833
+2022-04-26 21:23:46,489 - mmaction - INFO - Epoch [10][40/50]	lr: 9.010e-01, eta: 0:20:41, time: 0.803, data_time: 0.634, memory: 861, top1_acc: 0.6266, top5_acc: 0.9586, loss_cls: 10.8653, loss: 10.8653, grad_norm: 2.5844
+2022-04-26 21:24:16,756 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:24:16,756 - mmaction - INFO - 
+top1_acc	0.7056
+top5_acc	0.8611
+2022-04-26 21:24:16,756 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:24:16,757 - mmaction - INFO - 
+mean_acc	0.7056
+2022-04-26 21:24:16,757 - mmaction - INFO - Epoch(val) [10][6]	top1_acc: 0.7056, top5_acc: 0.8611, mean_class_accuracy: 0.7056
+2022-04-26 21:24:48,306 - mmaction - INFO - Epoch [11][40/50]	lr: 8.806e-01, eta: 0:20:05, time: 0.789, data_time: 0.615, memory: 861, top1_acc: 0.5867, top5_acc: 0.9500, loss_cls: 12.7087, loss: 12.7087, grad_norm: 2.8035
+2022-04-26 21:25:18,208 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:25:18,208 - mmaction - INFO - 
+top1_acc	0.6778
+top5_acc	0.9278
+2022-04-26 21:25:18,208 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:25:18,209 - mmaction - INFO - 
+mean_acc	0.6778
+2022-04-26 21:25:18,209 - mmaction - INFO - Epoch(val) [11][6]	top1_acc: 0.6778, top5_acc: 0.9278, mean_class_accuracy: 0.6778
+2022-04-26 21:25:50,338 - mmaction - INFO - Epoch [12][40/50]	lr: 8.586e-01, eta: 0:19:32, time: 0.803, data_time: 0.629, memory: 861, top1_acc: 0.6211, top5_acc: 0.9477, loss_cls: 11.2193, loss: 11.2193, grad_norm: 2.5181
+2022-04-26 21:26:20,299 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:26:20,299 - mmaction - INFO - 
+top1_acc	0.6000
+top5_acc	0.9778
+2022-04-26 21:26:20,299 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:26:20,306 - mmaction - INFO - 
+mean_acc	0.6000
+2022-04-26 21:26:20,306 - mmaction - INFO - Epoch(val) [12][6]	top1_acc: 0.6000, top5_acc: 0.9778, mean_class_accuracy: 0.6000
+2022-04-26 21:26:52,517 - mmaction - INFO - Epoch [13][40/50]	lr: 8.351e-01, eta: 0:18:59, time: 0.805, data_time: 0.702, memory: 861, top1_acc: 0.6094, top5_acc: 0.9547, loss_cls: 11.9640, loss: 11.9640, grad_norm: 2.7579
+2022-04-26 21:27:22,739 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:27:22,739 - mmaction - INFO - 
+top1_acc	0.7278
+top5_acc	0.9556
+2022-04-26 21:27:22,739 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:27:22,740 - mmaction - INFO - 
+mean_acc	0.7278
+2022-04-26 21:27:22,740 - mmaction - INFO - Epoch(val) [13][6]	top1_acc: 0.7278, top5_acc: 0.9556, mean_class_accuracy: 0.7278
+2022-04-26 21:27:54,599 - mmaction - INFO - Epoch [14][40/50]	lr: 8.101e-01, eta: 0:18:26, time: 0.796, data_time: 0.687, memory: 861, top1_acc: 0.5859, top5_acc: 0.9336, loss_cls: 15.1900, loss: 15.1900, grad_norm: 3.0549
+2022-04-26 21:28:24,265 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:28:24,266 - mmaction - INFO - 
+top1_acc	0.6611
+top5_acc	0.9000
+2022-04-26 21:28:24,266 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:28:24,266 - mmaction - INFO - 
+mean_acc	0.6611
+2022-04-26 21:28:24,266 - mmaction - INFO - Epoch(val) [14][6]	top1_acc: 0.6611, top5_acc: 0.9000, mean_class_accuracy: 0.6611
+2022-04-26 21:28:55,983 - mmaction - INFO - Epoch [15][40/50]	lr: 7.837e-01, eta: 0:17:52, time: 0.793, data_time: 0.649, memory: 861, top1_acc: 0.6133, top5_acc: 0.9586, loss_cls: 10.8420, loss: 10.8420, grad_norm: 2.6239
+2022-04-26 21:29:26,529 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:29:26,529 - mmaction - INFO - 
+top1_acc	0.7556
+top5_acc	0.9444
+2022-04-26 21:29:26,530 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:29:26,530 - mmaction - INFO - 
+mean_acc	0.7556
+2022-04-26 21:29:26,531 - mmaction - INFO - The previous best checkpoint /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5/best_top1_acc_epoch_6.pth was removed
+2022-04-26 21:29:26,560 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_15.pth.
+2022-04-26 21:29:26,561 - mmaction - INFO - Best top1_acc is 0.7556 at 15 epoch.
+2022-04-26 21:29:26,561 - mmaction - INFO - Epoch(val) [15][6]	top1_acc: 0.7556, top5_acc: 0.9444, mean_class_accuracy: 0.7556
+2022-04-26 21:29:58,840 - mmaction - INFO - Epoch [16][40/50]	lr: 7.562e-01, eta: 0:17:19, time: 0.807, data_time: 0.670, memory: 861, top1_acc: 0.6414, top5_acc: 0.9602, loss_cls: 10.3360, loss: 10.3360, grad_norm: 2.4926
+2022-04-26 21:30:28,436 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:30:28,437 - mmaction - INFO - 
+top1_acc	0.7500
+top5_acc	0.9889
+2022-04-26 21:30:28,437 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:30:28,437 - mmaction - INFO - 
+mean_acc	0.7500
+2022-04-26 21:30:28,438 - mmaction - INFO - Epoch(val) [16][6]	top1_acc: 0.7500, top5_acc: 0.9889, mean_class_accuracy: 0.7500
+2022-04-26 21:31:00,167 - mmaction - INFO - Epoch [17][40/50]	lr: 7.276e-01, eta: 0:16:46, time: 0.793, data_time: 0.667, memory: 861, top1_acc: 0.6117, top5_acc: 0.9531, loss_cls: 11.8184, loss: 11.8184, grad_norm: 2.8141
+2022-04-26 21:31:30,019 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:31:30,019 - mmaction - INFO - 
+top1_acc	0.6778
+top5_acc	0.9500
+2022-04-26 21:31:30,019 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:31:30,020 - mmaction - INFO - 
+mean_acc	0.6778
+2022-04-26 21:31:30,020 - mmaction - INFO - Epoch(val) [17][6]	top1_acc: 0.6778, top5_acc: 0.9500, mean_class_accuracy: 0.6778
+2022-04-26 21:32:01,880 - mmaction - INFO - Epoch [18][40/50]	lr: 6.980e-01, eta: 0:16:13, time: 0.796, data_time: 0.677, memory: 861, top1_acc: 0.6297, top5_acc: 0.9656, loss_cls: 9.8893, loss: 9.8893, grad_norm: 2.6382
+2022-04-26 21:32:31,916 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:32:31,916 - mmaction - INFO - 
+top1_acc	0.6389
+top5_acc	0.9278
+2022-04-26 21:32:31,916 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:32:31,917 - mmaction - INFO - 
+mean_acc	0.6389
+2022-04-26 21:32:31,917 - mmaction - INFO - Epoch(val) [18][6]	top1_acc: 0.6389, top5_acc: 0.9278, mean_class_accuracy: 0.6389
+2022-04-26 21:33:03,603 - mmaction - INFO - Epoch [19][40/50]	lr: 6.675e-01, eta: 0:15:40, time: 0.792, data_time: 0.620, memory: 861, top1_acc: 0.6289, top5_acc: 0.9664, loss_cls: 10.0338, loss: 10.0338, grad_norm: 2.5959
+2022-04-26 21:33:33,940 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:33:33,940 - mmaction - INFO - 
+top1_acc	0.6444
+top5_acc	0.9556
+2022-04-26 21:33:33,940 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:33:33,941 - mmaction - INFO - 
+mean_acc	0.6444
+2022-04-26 21:33:33,941 - mmaction - INFO - Epoch(val) [19][6]	top1_acc: 0.6444, top5_acc: 0.9556, mean_class_accuracy: 0.6444
+2022-04-26 21:34:05,849 - mmaction - INFO - Epoch [20][40/50]	lr: 6.364e-01, eta: 0:15:07, time: 0.798, data_time: 0.677, memory: 861, top1_acc: 0.7133, top5_acc: 0.9820, loss_cls: 6.0660, loss: 6.0660, grad_norm: 2.0581
+2022-04-26 21:34:36,026 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:34:36,027 - mmaction - INFO - 
+top1_acc	0.6778
+top5_acc	0.9944
+2022-04-26 21:34:36,027 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:34:36,027 - mmaction - INFO - 
+mean_acc	0.6778
+2022-04-26 21:34:36,027 - mmaction - INFO - Epoch(val) [20][6]	top1_acc: 0.6778, top5_acc: 0.9944, mean_class_accuracy: 0.6778
+2022-04-26 21:35:07,935 - mmaction - INFO - Epoch [21][40/50]	lr: 6.046e-01, eta: 0:14:35, time: 0.798, data_time: 0.745, memory: 861, top1_acc: 0.6828, top5_acc: 0.9758, loss_cls: 6.7966, loss: 6.7966, grad_norm: 2.2469
+2022-04-26 21:35:37,727 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:35:37,728 - mmaction - INFO - 
+top1_acc	0.6333
+top5_acc	0.9778
+2022-04-26 21:35:37,728 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:35:37,728 - mmaction - INFO - 
+mean_acc	0.6333
+2022-04-26 21:35:37,728 - mmaction - INFO - Epoch(val) [21][6]	top1_acc: 0.6333, top5_acc: 0.9778, mean_class_accuracy: 0.6333
+2022-04-26 21:36:09,524 - mmaction - INFO - Epoch [22][40/50]	lr: 5.724e-01, eta: 0:14:02, time: 0.795, data_time: 0.649, memory: 861, top1_acc: 0.6820, top5_acc: 0.9789, loss_cls: 6.4755, loss: 6.4755, grad_norm: 2.1843
+2022-04-26 21:36:39,718 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:36:39,719 - mmaction - INFO - 
+top1_acc	0.6000
+top5_acc	0.9611
+2022-04-26 21:36:39,719 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:36:39,720 - mmaction - INFO - 
+mean_acc	0.6000
+2022-04-26 21:36:39,720 - mmaction - INFO - Epoch(val) [22][6]	top1_acc: 0.6000, top5_acc: 0.9611, mean_class_accuracy: 0.6000
+2022-04-26 21:37:11,703 - mmaction - INFO - Epoch [23][40/50]	lr: 5.399e-01, eta: 0:13:30, time: 0.799, data_time: 0.734, memory: 861, top1_acc: 0.6531, top5_acc: 0.9742, loss_cls: 7.5604, loss: 7.5604, grad_norm: 2.5748
+2022-04-26 21:37:42,382 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:37:42,382 - mmaction - INFO - 
+top1_acc	0.6611
+top5_acc	0.8667
+2022-04-26 21:37:42,382 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:37:42,383 - mmaction - INFO - 
+mean_acc	0.6611
+2022-04-26 21:37:42,383 - mmaction - INFO - Epoch(val) [23][6]	top1_acc: 0.6611, top5_acc: 0.8667, mean_class_accuracy: 0.6611
+2022-04-26 21:38:14,593 - mmaction - INFO - Epoch [24][40/50]	lr: 5.072e-01, eta: 0:12:58, time: 0.805, data_time: 0.736, memory: 861, top1_acc: 0.6930, top5_acc: 0.9812, loss_cls: 5.7259, loss: 5.7259, grad_norm: 2.2714
+2022-04-26 21:38:44,630 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:38:44,631 - mmaction - INFO - 
+top1_acc	0.6722
+top5_acc	0.9500
+2022-04-26 21:38:44,631 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:38:44,632 - mmaction - INFO - 
+mean_acc	0.6722
+2022-04-26 21:38:44,632 - mmaction - INFO - Epoch(val) [24][6]	top1_acc: 0.6722, top5_acc: 0.9500, mean_class_accuracy: 0.6722
+2022-04-26 21:39:16,659 - mmaction - INFO - Epoch [25][40/50]	lr: 4.745e-01, eta: 0:12:25, time: 0.801, data_time: 0.751, memory: 861, top1_acc: 0.6586, top5_acc: 0.9625, loss_cls: 7.5910, loss: 7.5910, grad_norm: 2.5000
+2022-04-26 21:39:46,768 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:39:46,769 - mmaction - INFO - 
+top1_acc	0.6056
+top5_acc	0.9444
+2022-04-26 21:39:46,769 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:39:46,769 - mmaction - INFO - 
+mean_acc	0.6056
+2022-04-26 21:39:46,769 - mmaction - INFO - Epoch(val) [25][6]	top1_acc: 0.6056, top5_acc: 0.9444, mean_class_accuracy: 0.6056
+2022-04-26 21:40:18,972 - mmaction - INFO - Epoch [26][40/50]	lr: 4.419e-01, eta: 0:11:53, time: 0.805, data_time: 0.636, memory: 861, top1_acc: 0.6758, top5_acc: 0.9727, loss_cls: 6.6143, loss: 6.6143, grad_norm: 2.4203
+2022-04-26 21:40:49,246 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:40:49,247 - mmaction - INFO - 
+top1_acc	0.5778
+top5_acc	0.9778
+2022-04-26 21:40:49,247 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:40:49,247 - mmaction - INFO - 
+mean_acc	0.5778
+2022-04-26 21:40:49,248 - mmaction - INFO - Epoch(val) [26][6]	top1_acc: 0.5778, top5_acc: 0.9778, mean_class_accuracy: 0.5778
+2022-04-26 21:41:21,028 - mmaction - INFO - Epoch [27][40/50]	lr: 4.095e-01, eta: 0:11:21, time: 0.794, data_time: 0.721, memory: 861, top1_acc: 0.6727, top5_acc: 0.9750, loss_cls: 6.5246, loss: 6.5246, grad_norm: 2.3640
+2022-04-26 21:41:50,990 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:41:50,990 - mmaction - INFO - 
+top1_acc	0.7389
+top5_acc	0.9389
+2022-04-26 21:41:50,990 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:41:50,991 - mmaction - INFO - 
+mean_acc	0.7389
+2022-04-26 21:41:50,991 - mmaction - INFO - Epoch(val) [27][6]	top1_acc: 0.7389, top5_acc: 0.9389, mean_class_accuracy: 0.7389
+2022-04-26 21:42:22,927 - mmaction - INFO - Epoch [28][40/50]	lr: 3.776e-01, eta: 0:10:49, time: 0.798, data_time: 0.692, memory: 861, top1_acc: 0.6805, top5_acc: 0.9820, loss_cls: 5.4754, loss: 5.4754, grad_norm: 2.2580
+2022-04-26 21:42:52,952 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:42:52,952 - mmaction - INFO - 
+top1_acc	0.7222
+top5_acc	0.9556
+2022-04-26 21:42:52,952 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:42:52,953 - mmaction - INFO - 
+mean_acc	0.7222
+2022-04-26 21:42:52,953 - mmaction - INFO - Epoch(val) [28][6]	top1_acc: 0.7222, top5_acc: 0.9556, mean_class_accuracy: 0.7222
+2022-04-26 21:43:25,192 - mmaction - INFO - Epoch [29][40/50]	lr: 3.461e-01, eta: 0:10:17, time: 0.806, data_time: 0.626, memory: 861, top1_acc: 0.7164, top5_acc: 0.9852, loss_cls: 4.8430, loss: 4.8430, grad_norm: 2.0534
+2022-04-26 21:43:55,130 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:43:55,131 - mmaction - INFO - 
+top1_acc	0.6722
+top5_acc	0.9778
+2022-04-26 21:43:55,131 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:43:55,131 - mmaction - INFO - 
+mean_acc	0.6722
+2022-04-26 21:43:55,131 - mmaction - INFO - Epoch(val) [29][6]	top1_acc: 0.6722, top5_acc: 0.9778, mean_class_accuracy: 0.6722
+2022-04-26 21:44:26,999 - mmaction - INFO - Epoch [30][40/50]	lr: 3.153e-01, eta: 0:09:44, time: 0.797, data_time: 0.662, memory: 861, top1_acc: 0.7070, top5_acc: 0.9797, loss_cls: 4.2221, loss: 4.2221, grad_norm: 2.1033
+2022-04-26 21:44:57,041 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:44:57,042 - mmaction - INFO - 
+top1_acc	0.7611
+top5_acc	0.9611
+2022-04-26 21:44:57,042 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:44:57,042 - mmaction - INFO - 
+mean_acc	0.7611
+2022-04-26 21:44:57,043 - mmaction - INFO - The previous best checkpoint /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5/best_top1_acc_epoch_15.pth was removed
+2022-04-26 21:44:57,073 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_30.pth.
+2022-04-26 21:44:57,073 - mmaction - INFO - Best top1_acc is 0.7611 at 30 epoch.
+2022-04-26 21:44:57,073 - mmaction - INFO - Epoch(val) [30][6]	top1_acc: 0.7611, top5_acc: 0.9611, mean_class_accuracy: 0.7611
+2022-04-26 21:45:29,256 - mmaction - INFO - Epoch [31][40/50]	lr: 2.853e-01, eta: 0:09:12, time: 0.804, data_time: 0.686, memory: 861, top1_acc: 0.7398, top5_acc: 0.9836, loss_cls: 3.6978, loss: 3.6978, grad_norm: 1.9305
+2022-04-26 21:45:59,269 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:45:59,269 - mmaction - INFO - 
+top1_acc	0.6833
+top5_acc	0.9556
+2022-04-26 21:45:59,269 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:45:59,270 - mmaction - INFO - 
+mean_acc	0.6833
+2022-04-26 21:45:59,270 - mmaction - INFO - Epoch(val) [31][6]	top1_acc: 0.6833, top5_acc: 0.9556, mean_class_accuracy: 0.6833
+2022-04-26 21:46:30,796 - mmaction - INFO - Epoch [32][40/50]	lr: 2.563e-01, eta: 0:08:40, time: 0.788, data_time: 0.703, memory: 861, top1_acc: 0.7500, top5_acc: 0.9859, loss_cls: 3.2021, loss: 3.2021, grad_norm: 1.8325
+2022-04-26 21:47:00,966 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:47:00,966 - mmaction - INFO - 
+top1_acc	0.8000
+top5_acc	0.9556
+2022-04-26 21:47:00,966 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:47:00,967 - mmaction - INFO - 
+mean_acc	0.8000
+2022-04-26 21:47:00,968 - mmaction - INFO - The previous best checkpoint /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5/best_top1_acc_epoch_30.pth was removed
+2022-04-26 21:47:00,994 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_32.pth.
+2022-04-26 21:47:00,994 - mmaction - INFO - Best top1_acc is 0.8000 at 32 epoch.
+2022-04-26 21:47:00,994 - mmaction - INFO - Epoch(val) [32][6]	top1_acc: 0.8000, top5_acc: 0.9556, mean_class_accuracy: 0.8000
+2022-04-26 21:47:32,522 - mmaction - INFO - Epoch [33][40/50]	lr: 2.282e-01, eta: 0:08:07, time: 0.788, data_time: 0.645, memory: 861, top1_acc: 0.7445, top5_acc: 0.9852, loss_cls: 3.0406, loss: 3.0406, grad_norm: 1.7381
+2022-04-26 21:48:02,316 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:48:02,317 - mmaction - INFO - 
+top1_acc	0.7111
+top5_acc	0.9556
+2022-04-26 21:48:02,317 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:48:02,317 - mmaction - INFO - 
+mean_acc	0.7111
+2022-04-26 21:48:02,317 - mmaction - INFO - Epoch(val) [33][6]	top1_acc: 0.7111, top5_acc: 0.9556, mean_class_accuracy: 0.7111
+2022-04-26 21:48:34,243 - mmaction - INFO - Epoch [34][40/50]	lr: 2.014e-01, eta: 0:07:35, time: 0.798, data_time: 0.623, memory: 861, top1_acc: 0.7484, top5_acc: 0.9906, loss_cls: 2.7373, loss: 2.7373, grad_norm: 1.7988
+2022-04-26 21:49:03,526 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:49:03,526 - mmaction - INFO - 
+top1_acc	0.7389
+top5_acc	0.9556
+2022-04-26 21:49:03,526 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:49:03,527 - mmaction - INFO - 
+mean_acc	0.7389
+2022-04-26 21:49:03,527 - mmaction - INFO - Epoch(val) [34][6]	top1_acc: 0.7389, top5_acc: 0.9556, mean_class_accuracy: 0.7389
+2022-04-26 21:49:35,689 - mmaction - INFO - Epoch [35][40/50]	lr: 1.758e-01, eta: 0:07:03, time: 0.804, data_time: 0.629, memory: 861, top1_acc: 0.7492, top5_acc: 0.9891, loss_cls: 2.7864, loss: 2.7864, grad_norm: 1.8294
+2022-04-26 21:50:05,235 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:50:05,236 - mmaction - INFO - 
+top1_acc	0.7944
+top5_acc	0.9444
+2022-04-26 21:50:05,236 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:50:05,237 - mmaction - INFO - 
+mean_acc	0.7944
+2022-04-26 21:50:05,237 - mmaction - INFO - Epoch(val) [35][6]	top1_acc: 0.7944, top5_acc: 0.9444, mean_class_accuracy: 0.7944
+2022-04-26 21:50:36,578 - mmaction - INFO - Epoch [36][40/50]	lr: 1.516e-01, eta: 0:06:31, time: 0.783, data_time: 0.733, memory: 861, top1_acc: 0.7789, top5_acc: 0.9906, loss_cls: 2.2281, loss: 2.2281, grad_norm: 1.6615
+2022-04-26 21:51:06,347 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:51:06,348 - mmaction - INFO - 
+top1_acc	0.8667
+top5_acc	0.9556
+2022-04-26 21:51:06,348 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:51:06,348 - mmaction - INFO - 
+mean_acc	0.8667
+2022-04-26 21:51:06,350 - mmaction - INFO - The previous best checkpoint /home/yl/myposec3d/model_pth/exp1-new/WSNR-linear5/best_top1_acc_epoch_32.pth was removed
+2022-04-26 21:51:06,375 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_36.pth.
+2022-04-26 21:51:06,375 - mmaction - INFO - Best top1_acc is 0.8667 at 36 epoch.
+2022-04-26 21:51:06,375 - mmaction - INFO - Epoch(val) [36][6]	top1_acc: 0.8667, top5_acc: 0.9556, mean_class_accuracy: 0.8667
+2022-04-26 21:51:38,068 - mmaction - INFO - Epoch [37][40/50]	lr: 1.289e-01, eta: 0:05:59, time: 0.792, data_time: 0.729, memory: 861, top1_acc: 0.7734, top5_acc: 0.9938, loss_cls: 1.9225, loss: 1.9225, grad_norm: 1.6162
+2022-04-26 21:52:07,459 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:52:07,460 - mmaction - INFO - 
+top1_acc	0.8222
+top5_acc	0.9722
+2022-04-26 21:52:07,460 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:52:07,460 - mmaction - INFO - 
+mean_acc	0.8222
+2022-04-26 21:52:07,460 - mmaction - INFO - Epoch(val) [37][6]	top1_acc: 0.8222, top5_acc: 0.9722, mean_class_accuracy: 0.8222
+2022-04-26 21:52:39,440 - mmaction - INFO - Epoch [38][40/50]	lr: 1.077e-01, eta: 0:05:26, time: 0.799, data_time: 0.744, memory: 861, top1_acc: 0.7898, top5_acc: 0.9867, loss_cls: 1.7524, loss: 1.7524, grad_norm: 1.5625
+2022-04-26 21:53:08,915 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:53:08,915 - mmaction - INFO - 
+top1_acc	0.8167
+top5_acc	0.9556
+2022-04-26 21:53:08,915 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:53:08,916 - mmaction - INFO - 
+mean_acc	0.8167
+2022-04-26 21:53:08,916 - mmaction - INFO - Epoch(val) [38][6]	top1_acc: 0.8167, top5_acc: 0.9556, mean_class_accuracy: 0.8167
+2022-04-26 21:53:40,673 - mmaction - INFO - Epoch [39][40/50]	lr: 8.831e-02, eta: 0:04:54, time: 0.794, data_time: 0.688, memory: 861, top1_acc: 0.7844, top5_acc: 0.9938, loss_cls: 2.0303, loss: 2.0303, grad_norm: 1.6273
+2022-04-26 21:54:10,342 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:54:10,342 - mmaction - INFO - 
+top1_acc	0.7333
+top5_acc	0.9611
+2022-04-26 21:54:10,343 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:54:10,343 - mmaction - INFO - 
+mean_acc	0.7333
+2022-04-26 21:54:10,343 - mmaction - INFO - Epoch(val) [39][6]	top1_acc: 0.7333, top5_acc: 0.9611, mean_class_accuracy: 0.7333
+2022-04-26 21:54:41,738 - mmaction - INFO - Epoch [40][40/50]	lr: 7.063e-02, eta: 0:04:22, time: 0.785, data_time: 0.672, memory: 861, top1_acc: 0.7930, top5_acc: 0.9898, loss_cls: 1.8706, loss: 1.8706, grad_norm: 1.6284
+2022-04-26 21:55:11,543 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:55:11,544 - mmaction - INFO - 
+top1_acc	0.8222
+top5_acc	0.9611
+2022-04-26 21:55:11,544 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:55:11,544 - mmaction - INFO - 
+mean_acc	0.8222
+2022-04-26 21:55:11,544 - mmaction - INFO - Epoch(val) [40][6]	top1_acc: 0.8222, top5_acc: 0.9611, mean_class_accuracy: 0.8222
+2022-04-26 21:55:43,207 - mmaction - INFO - Epoch [41][40/50]	lr: 5.479e-02, eta: 0:03:50, time: 0.791, data_time: 0.681, memory: 861, top1_acc: 0.8031, top5_acc: 0.9961, loss_cls: 1.6217, loss: 1.6217, grad_norm: 1.4627
+2022-04-26 21:56:12,776 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:56:12,777 - mmaction - INFO - 
+top1_acc	0.8278
+top5_acc	0.9611
+2022-04-26 21:56:12,777 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:56:12,778 - mmaction - INFO - 
+mean_acc	0.8278
+2022-04-26 21:56:12,778 - mmaction - INFO - Epoch(val) [41][6]	top1_acc: 0.8278, top5_acc: 0.9611, mean_class_accuracy: 0.8278
+2022-04-26 21:56:44,511 - mmaction - INFO - Epoch [42][40/50]	lr: 4.086e-02, eta: 0:03:18, time: 0.793, data_time: 0.713, memory: 861, top1_acc: 0.8070, top5_acc: 0.9930, loss_cls: 1.5117, loss: 1.5117, grad_norm: 1.4480
+2022-04-26 21:57:14,079 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:57:14,079 - mmaction - INFO - 
+top1_acc	0.8333
+top5_acc	0.9611
+2022-04-26 21:57:14,079 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:57:14,080 - mmaction - INFO - 
+mean_acc	0.8333
+2022-04-26 21:57:14,080 - mmaction - INFO - Epoch(val) [42][6]	top1_acc: 0.8333, top5_acc: 0.9611, mean_class_accuracy: 0.8333
+2022-04-26 21:57:45,250 - mmaction - INFO - Epoch [43][40/50]	lr: 2.890e-02, eta: 0:02:46, time: 0.779, data_time: 0.690, memory: 861, top1_acc: 0.8141, top5_acc: 0.9953, loss_cls: 1.4384, loss: 1.4384, grad_norm: 1.4105
+2022-04-26 21:58:15,168 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:58:15,169 - mmaction - INFO - 
+top1_acc	0.8444
+top5_acc	0.9556
+2022-04-26 21:58:15,169 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:58:15,170 - mmaction - INFO - 
+mean_acc	0.8444
+2022-04-26 21:58:15,170 - mmaction - INFO - Epoch(val) [43][6]	top1_acc: 0.8444, top5_acc: 0.9556, mean_class_accuracy: 0.8444
+2022-04-26 21:58:46,742 - mmaction - INFO - Epoch [44][40/50]	lr: 1.895e-02, eta: 0:02:14, time: 0.789, data_time: 0.721, memory: 861, top1_acc: 0.8133, top5_acc: 0.9945, loss_cls: 1.4277, loss: 1.4277, grad_norm: 1.4041
+2022-04-26 21:59:16,623 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 21:59:16,624 - mmaction - INFO - 
+top1_acc	0.8333
+top5_acc	0.9611
+2022-04-26 21:59:16,624 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 21:59:16,624 - mmaction - INFO - 
+mean_acc	0.8333
+2022-04-26 21:59:16,624 - mmaction - INFO - Epoch(val) [44][6]	top1_acc: 0.8333, top5_acc: 0.9611, mean_class_accuracy: 0.8333
+2022-04-26 21:59:48,183 - mmaction - INFO - Epoch [45][40/50]	lr: 1.106e-02, eta: 0:01:42, time: 0.789, data_time: 0.739, memory: 861, top1_acc: 0.8203, top5_acc: 0.9977, loss_cls: 1.2993, loss: 1.2993, grad_norm: 1.3636
+2022-04-26 22:00:17,546 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 22:00:17,546 - mmaction - INFO - 
+top1_acc	0.8278
+top5_acc	0.9611
+2022-04-26 22:00:17,546 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 22:00:17,547 - mmaction - INFO - 
+mean_acc	0.8278
+2022-04-26 22:00:17,547 - mmaction - INFO - Epoch(val) [45][6]	top1_acc: 0.8278, top5_acc: 0.9611, mean_class_accuracy: 0.8278
+2022-04-26 22:00:49,765 - mmaction - INFO - Epoch [46][40/50]	lr: 5.269e-03, eta: 0:01:10, time: 0.805, data_time: 0.630, memory: 861, top1_acc: 0.8148, top5_acc: 0.9977, loss_cls: 1.3548, loss: 1.3548, grad_norm: 1.3594
+2022-04-26 22:01:19,520 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 22:01:19,520 - mmaction - INFO - 
+top1_acc	0.8500
+top5_acc	0.9611
+2022-04-26 22:01:19,520 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 22:01:19,520 - mmaction - INFO - 
+mean_acc	0.8500
+2022-04-26 22:01:19,521 - mmaction - INFO - Epoch(val) [46][6]	top1_acc: 0.8500, top5_acc: 0.9611, mean_class_accuracy: 0.8500
+2022-04-26 22:01:51,368 - mmaction - INFO - Epoch [47][40/50]	lr: 1.593e-03, eta: 0:00:38, time: 0.796, data_time: 0.618, memory: 861, top1_acc: 0.8211, top5_acc: 0.9953, loss_cls: 1.3798, loss: 1.3798, grad_norm: 1.3718
+2022-04-26 22:02:21,159 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 22:02:21,159 - mmaction - INFO - 
+top1_acc	0.8444
+top5_acc	0.9611
+2022-04-26 22:02:21,159 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 22:02:21,160 - mmaction - INFO - 
+mean_acc	0.8444
+2022-04-26 22:02:21,160 - mmaction - INFO - Epoch(val) [47][6]	top1_acc: 0.8444, top5_acc: 0.9611, mean_class_accuracy: 0.8444
+2022-04-26 22:02:52,638 - mmaction - INFO - Epoch [48][40/50]	lr: 5.183e-05, eta: 0:00:06, time: 0.787, data_time: 0.716, memory: 861, top1_acc: 0.8359, top5_acc: 0.9953, loss_cls: 1.2351, loss: 1.2351, grad_norm: 1.2375
+2022-04-26 22:02:55,073 - mmaction - INFO - Saving checkpoint at 48 epochs
+2022-04-26 22:03:22,871 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-04-26 22:03:22,872 - mmaction - INFO - 
+top1_acc	0.8444
+top5_acc	0.9611
+2022-04-26 22:03:22,872 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-04-26 22:03:22,873 - mmaction - INFO - 
+mean_acc	0.8444
+2022-04-26 22:03:22,873 - mmaction - INFO - Epoch(val) [48][6]	top1_acc: 0.8444, top5_acc: 0.9611, mean_class_accuracy: 0.8444

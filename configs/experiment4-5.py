@@ -117,10 +117,10 @@ log_config = dict(
     output_config和eval_config是测试时使用的参数
 '''
 output_config = dict(
-    out = 'test_result/results.pkl'
+    out = './model_pth/5part_ntu60_xsub_limb_0412/test_result/results.pkl'
 )
 eval_config = dict(
-    metric_out = 'test_result',
+    metric_out = './model_pth/5part_ntu60_xsub_limb_0412/test_result',
     eval = ['top_k_accuracy', 'mean_class_accuracy', 'confusion_matrix'],
 ) # train中不写test_last test_best 在test.py中测试
 dist_params = dict(backend='nccl')

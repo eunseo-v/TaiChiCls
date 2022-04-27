@@ -1,0 +1,12 @@
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T3A2.py ./model_pth/exp3/NSNR-linear5-T3A2/best_top1_acc_epoch_19.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T3A4.py ./model_pth/exp3/NSNR-linear5-T3A4/best_top1_acc_epoch_17.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T3A8.py ./model_pth/exp3/NSNR-linear5-T3A8/best_top1_acc_epoch_21.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T5A2.py ./model_pth/exp3/NSNR-linear5-T5A2/best_top1_acc_epoch_17.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T5A4.py ./model_pth/exp3/NSNR-linear5-T5A4/best_top1_acc_epoch_14.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T5A8.py ./model_pth/exp3/NSNR-linear5-T5A8/best_top1_acc_epoch_22.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T7A2.py ./model_pth/exp3/NSNR-linear5-T7A2/best_top1_acc_epoch_15.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T7A4.py ./model_pth/exp3/NSNR-linear5-T7A4/best_top1_acc_epoch_18.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T7A8.py ./model_pth/exp3/NSNR-linear5-T7A8/best_top1_acc_epoch_24.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T9A2.py ./model_pth/exp3/NSNR-linear5-T9A2/best_top1_acc_epoch_26.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T9A4.py ./model_pth/exp3/NSNR-linear5-T9A4/best_top1_acc_epoch_39.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp3/NSNR-linear5-T9A8.py ./model_pth/exp3/NSNR-linear5-T9A8/best_top1_acc_epoch_35.pth
