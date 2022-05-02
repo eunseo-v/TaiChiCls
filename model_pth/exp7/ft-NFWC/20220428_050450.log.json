@@ -1,0 +1,97 @@
+{"env_info": "sys.platform: linux\nPython: 3.8.12 | packaged by conda-forge | (default, Oct 12 2021, 21:57:06) [GCC 9.4.0]\nCUDA available: True\nGPU 0,1,2,3: NVIDIA GeForce RTX 3090\nCUDA_HOME: /usr/local/cuda\nNVCC: Build cuda_11.1.TC455_06.29190527_0\nGCC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0\nPyTorch: 1.9.1+cu111\nPyTorch compiling details: PyTorch built with:\n  - GCC 7.3\n  - C++ Version: 201402\n  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications\n  - Intel(R) MKL-DNN v2.1.2 (Git Hash 98be7e8afa711dc9b66c8ff3504129cb82013cdb)\n  - OpenMP 201511 (a.k.a. OpenMP 4.5)\n  - NNPACK is enabled\n  - CPU capability usage: AVX2\n  - CUDA Runtime 11.1\n  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86\n  - CuDNN 8.0.5\n  - Magma 2.5.2\n  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.1, CUDNN_VERSION=8.0.5, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.9.1, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, \n\nTorchVision: 0.10.1+cu111\nOpenCV: 4.5.5\nMMCV: 1.4.2\nMMCV Compiler: GCC 7.3\nMMCV CUDA Compiler: 11.1\nMMAction2: 0.20.0+1c4333f", "seed": 42, "config_name": "ft-NFWC.py", "work_dir": "ft-NFWC", "hook_msgs": {}}
+{"mode": "train", "epoch": 1, "iter": 40, "lr": 0.00999, "memory": 4754, "data_time": 0.72611, "top1_acc": 0.65469, "top5_acc": 0.87422, "loss_cls": 1.38679, "loss": 1.38679, "grad_norm": 2.16997, "time": 1.00255}
+{"mode": "val", "epoch": 1, "iter": 6, "lr": 0.00999, "top1_acc": 0.87778, "top5_acc": 0.97778, "mean_class_accuracy": 0.87778}
+{"mode": "train", "epoch": 2, "iter": 40, "lr": 0.00997, "memory": 4754, "data_time": 0.67984, "top1_acc": 0.99766, "top5_acc": 1.0, "loss_cls": 0.07082, "loss": 0.07082, "grad_norm": 0.75235, "time": 0.93103}
+{"mode": "val", "epoch": 2, "iter": 6, "lr": 0.00996, "top1_acc": 0.91111, "top5_acc": 0.98333, "mean_class_accuracy": 0.91111}
+{"mode": "train", "epoch": 3, "iter": 40, "lr": 0.00992, "memory": 4754, "data_time": 0.70501, "top1_acc": 0.99922, "top5_acc": 1.0, "loss_cls": 0.03045, "loss": 0.03045, "grad_norm": 0.42769, "time": 0.9431}
+{"mode": "val", "epoch": 3, "iter": 6, "lr": 0.00991, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 4, "iter": 40, "lr": 0.00985, "memory": 4754, "data_time": 0.6799, "top1_acc": 0.99766, "top5_acc": 1.0, "loss_cls": 0.02471, "loss": 0.02471, "grad_norm": 0.45424, "time": 0.9241}
+{"mode": "val", "epoch": 4, "iter": 6, "lr": 0.00983, "top1_acc": 0.98333, "top5_acc": 0.99444, "mean_class_accuracy": 0.98333}
+{"mode": "train", "epoch": 5, "iter": 40, "lr": 0.00976, "memory": 4754, "data_time": 0.68167, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.01621, "loss": 0.01621, "grad_norm": 0.27667, "time": 0.93414}
+{"mode": "val", "epoch": 5, "iter": 6, "lr": 0.00974, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 6, "iter": 40, "lr": 0.00965, "memory": 4754, "data_time": 0.72942, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.01402, "loss": 0.01402, "grad_norm": 0.22726, "time": 0.94556}
+{"mode": "val", "epoch": 6, "iter": 6, "lr": 0.00962, "top1_acc": 0.99444, "top5_acc": 0.99444, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 7, "iter": 40, "lr": 0.00952, "memory": 4754, "data_time": 0.71316, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.01054, "loss": 0.01054, "grad_norm": 0.18365, "time": 0.93545}
+{"mode": "val", "epoch": 7, "iter": 6, "lr": 0.00949, "top1_acc": 0.98889, "top5_acc": 1.0, "mean_class_accuracy": 0.98889}
+{"mode": "train", "epoch": 8, "iter": 40, "lr": 0.00937, "memory": 4754, "data_time": 0.71217, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00821, "loss": 0.00821, "grad_norm": 0.13902, "time": 0.96081}
+{"mode": "val", "epoch": 8, "iter": 6, "lr": 0.00933, "top1_acc": 0.97222, "top5_acc": 1.0, "mean_class_accuracy": 0.97222}
+{"mode": "train", "epoch": 9, "iter": 40, "lr": 0.0092, "memory": 4754, "data_time": 0.70796, "top1_acc": 0.99922, "top5_acc": 1.0, "loss_cls": 0.00925, "loss": 0.00925, "grad_norm": 0.18385, "time": 0.92333}
+{"mode": "val", "epoch": 9, "iter": 6, "lr": 0.00916, "top1_acc": 0.98333, "top5_acc": 1.0, "mean_class_accuracy": 0.98333}
+{"mode": "train", "epoch": 10, "iter": 40, "lr": 0.00901, "memory": 4754, "data_time": 0.68498, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00783, "loss": 0.00783, "grad_norm": 0.1416, "time": 0.92479}
+{"mode": "val", "epoch": 10, "iter": 6, "lr": 0.00897, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 11, "iter": 40, "lr": 0.00881, "memory": 4754, "data_time": 0.67406, "top1_acc": 0.99922, "top5_acc": 1.0, "loss_cls": 0.00705, "loss": 0.00705, "grad_norm": 0.17481, "time": 0.91438}
+{"mode": "val", "epoch": 11, "iter": 6, "lr": 0.00876, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 12, "iter": 40, "lr": 0.00859, "memory": 4754, "data_time": 0.68516, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00567, "loss": 0.00567, "grad_norm": 0.12543, "time": 0.90542}
+{"mode": "val", "epoch": 12, "iter": 6, "lr": 0.00854, "top1_acc": 0.99444, "top5_acc": 0.99444, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 13, "iter": 40, "lr": 0.00835, "memory": 4754, "data_time": 0.67505, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00496, "loss": 0.00496, "grad_norm": 0.09336, "time": 0.89539}
+{"mode": "val", "epoch": 13, "iter": 6, "lr": 0.0083, "top1_acc": 0.97778, "top5_acc": 0.99444, "mean_class_accuracy": 0.97778}
+{"mode": "train", "epoch": 14, "iter": 40, "lr": 0.0081, "memory": 4754, "data_time": 0.67646, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00468, "loss": 0.00468, "grad_norm": 0.09069, "time": 0.89744}
+{"mode": "val", "epoch": 14, "iter": 6, "lr": 0.00805, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 15, "iter": 40, "lr": 0.00784, "memory": 4754, "data_time": 0.68941, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00425, "loss": 0.00425, "grad_norm": 0.08553, "time": 0.89794}
+{"mode": "val", "epoch": 15, "iter": 6, "lr": 0.00778, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 16, "iter": 40, "lr": 0.00756, "memory": 4754, "data_time": 0.69557, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00378, "loss": 0.00378, "grad_norm": 0.08141, "time": 0.90372}
+{"mode": "val", "epoch": 16, "iter": 6, "lr": 0.00751, "top1_acc": 0.98333, "top5_acc": 1.0, "mean_class_accuracy": 0.98333}
+{"mode": "train", "epoch": 17, "iter": 40, "lr": 0.00728, "memory": 4754, "data_time": 0.67216, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00357, "loss": 0.00357, "grad_norm": 0.06978, "time": 0.90976}
+{"mode": "val", "epoch": 17, "iter": 6, "lr": 0.00722, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 18, "iter": 40, "lr": 0.00698, "memory": 4754, "data_time": 0.70507, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00282, "loss": 0.00282, "grad_norm": 0.05941, "time": 0.92953}
+{"mode": "val", "epoch": 18, "iter": 6, "lr": 0.00692, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 19, "iter": 40, "lr": 0.00668, "memory": 4754, "data_time": 0.68034, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00359, "loss": 0.00359, "grad_norm": 0.07255, "time": 0.89975}
+{"mode": "val", "epoch": 19, "iter": 6, "lr": 0.00661, "top1_acc": 1.0, "top5_acc": 1.0, "mean_class_accuracy": 1.0}
+{"mode": "train", "epoch": 20, "iter": 40, "lr": 0.00636, "memory": 4754, "data_time": 0.68176, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00513, "loss": 0.00513, "grad_norm": 0.10429, "time": 0.89844}
+{"mode": "val", "epoch": 20, "iter": 6, "lr": 0.0063, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 21, "iter": 40, "lr": 0.00605, "memory": 4754, "data_time": 0.69193, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00338, "loss": 0.00338, "grad_norm": 0.08222, "time": 0.93184}
+{"mode": "val", "epoch": 21, "iter": 6, "lr": 0.00598, "top1_acc": 0.98889, "top5_acc": 1.0, "mean_class_accuracy": 0.98889}
+{"mode": "train", "epoch": 22, "iter": 40, "lr": 0.00572, "memory": 4754, "data_time": 0.68159, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00324, "loss": 0.00324, "grad_norm": 0.06794, "time": 0.94248}
+{"mode": "val", "epoch": 22, "iter": 6, "lr": 0.00566, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 23, "iter": 40, "lr": 0.0054, "memory": 4754, "data_time": 0.68651, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.0046, "loss": 0.0046, "grad_norm": 0.09954, "time": 0.91729}
+{"mode": "val", "epoch": 23, "iter": 6, "lr": 0.00533, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 24, "iter": 40, "lr": 0.00507, "memory": 4754, "data_time": 0.68785, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00319, "loss": 0.00319, "grad_norm": 0.06956, "time": 0.9273}
+{"mode": "val", "epoch": 24, "iter": 6, "lr": 0.00501, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 25, "iter": 40, "lr": 0.00474, "memory": 4754, "data_time": 0.73453, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00604, "loss": 0.00604, "grad_norm": 0.13075, "time": 0.93782}
+{"mode": "val", "epoch": 25, "iter": 6, "lr": 0.00468, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 26, "iter": 40, "lr": 0.00442, "memory": 4754, "data_time": 0.68682, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00289, "loss": 0.00289, "grad_norm": 0.05442, "time": 0.91207}
+{"mode": "val", "epoch": 26, "iter": 6, "lr": 0.00435, "top1_acc": 0.98333, "top5_acc": 1.0, "mean_class_accuracy": 0.98333}
+{"mode": "train", "epoch": 27, "iter": 40, "lr": 0.0041, "memory": 4754, "data_time": 0.70483, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00249, "loss": 0.00249, "grad_norm": 0.04953, "time": 0.92253}
+{"mode": "val", "epoch": 27, "iter": 6, "lr": 0.00403, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 28, "iter": 40, "lr": 0.00378, "memory": 4754, "data_time": 0.72454, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00295, "loss": 0.00295, "grad_norm": 0.068, "time": 0.95661}
+{"mode": "val", "epoch": 28, "iter": 6, "lr": 0.00371, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 29, "iter": 40, "lr": 0.00346, "memory": 4754, "data_time": 0.70495, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00405, "loss": 0.00405, "grad_norm": 0.10563, "time": 0.97081}
+{"mode": "val", "epoch": 29, "iter": 6, "lr": 0.0034, "top1_acc": 0.98889, "top5_acc": 1.0, "mean_class_accuracy": 0.98889}
+{"mode": "train", "epoch": 30, "iter": 40, "lr": 0.00315, "memory": 4754, "data_time": 0.69236, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00684, "loss": 0.00684, "grad_norm": 0.11632, "time": 0.94504}
+{"mode": "val", "epoch": 30, "iter": 6, "lr": 0.00309, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 31, "iter": 40, "lr": 0.00285, "memory": 4754, "data_time": 0.72266, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00336, "loss": 0.00336, "grad_norm": 0.08166, "time": 0.93455}
+{"mode": "val", "epoch": 31, "iter": 6, "lr": 0.00279, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 32, "iter": 40, "lr": 0.00256, "memory": 4754, "data_time": 0.74924, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00326, "loss": 0.00326, "grad_norm": 0.07775, "time": 0.95698}
+{"mode": "val", "epoch": 32, "iter": 6, "lr": 0.00251, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 33, "iter": 40, "lr": 0.00228, "memory": 4754, "data_time": 0.69345, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00238, "loss": 0.00238, "grad_norm": 0.05353, "time": 0.94408}
+{"mode": "val", "epoch": 33, "iter": 6, "lr": 0.00223, "top1_acc": 0.99444, "top5_acc": 0.99444, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 34, "iter": 40, "lr": 0.00201, "memory": 4754, "data_time": 0.73473, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00333, "loss": 0.00333, "grad_norm": 0.08071, "time": 0.95529}
+{"mode": "val", "epoch": 34, "iter": 6, "lr": 0.00196, "top1_acc": 0.99444, "top5_acc": 0.99444, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 35, "iter": 40, "lr": 0.00176, "memory": 4754, "data_time": 0.74191, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00391, "loss": 0.00391, "grad_norm": 0.08948, "time": 0.95312}
+{"mode": "val", "epoch": 35, "iter": 6, "lr": 0.00171, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 36, "iter": 40, "lr": 0.00152, "memory": 4754, "data_time": 0.70142, "top1_acc": 0.99922, "top5_acc": 1.0, "loss_cls": 0.00447, "loss": 0.00447, "grad_norm": 0.12202, "time": 0.94955}
+{"mode": "val", "epoch": 36, "iter": 6, "lr": 0.00147, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 37, "iter": 40, "lr": 0.00129, "memory": 4754, "data_time": 0.7125, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00279, "loss": 0.00279, "grad_norm": 0.05748, "time": 0.94261}
+{"mode": "val", "epoch": 37, "iter": 6, "lr": 0.00125, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 38, "iter": 40, "lr": 0.00108, "memory": 4754, "data_time": 0.69897, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00201, "loss": 0.00201, "grad_norm": 0.04316, "time": 0.91382}
+{"mode": "val", "epoch": 38, "iter": 6, "lr": 0.00104, "top1_acc": 0.98333, "top5_acc": 0.99444, "mean_class_accuracy": 0.98333}
+{"mode": "train", "epoch": 39, "iter": 40, "lr": 0.00088, "memory": 4754, "data_time": 0.69257, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00247, "loss": 0.00247, "grad_norm": 0.05459, "time": 0.93207}
+{"mode": "val", "epoch": 39, "iter": 6, "lr": 0.00085, "top1_acc": 0.99444, "top5_acc": 0.99444, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 40, "iter": 40, "lr": 0.00071, "memory": 4754, "data_time": 0.67751, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00379, "loss": 0.00379, "grad_norm": 0.09067, "time": 0.94361}
+{"mode": "val", "epoch": 40, "iter": 6, "lr": 0.00067, "top1_acc": 0.97778, "top5_acc": 0.99444, "mean_class_accuracy": 0.97778}
+{"mode": "train", "epoch": 41, "iter": 40, "lr": 0.00055, "memory": 4754, "data_time": 0.69171, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00363, "loss": 0.00363, "grad_norm": 0.09907, "time": 0.9395}
+{"mode": "val", "epoch": 41, "iter": 6, "lr": 0.00052, "top1_acc": 0.99444, "top5_acc": 0.99444, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 42, "iter": 40, "lr": 0.00041, "memory": 4754, "data_time": 0.68221, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.003, "loss": 0.003, "grad_norm": 0.07545, "time": 0.9096}
+{"mode": "val", "epoch": 42, "iter": 6, "lr": 0.00038, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 43, "iter": 40, "lr": 0.00029, "memory": 4754, "data_time": 0.68417, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00216, "loss": 0.00216, "grad_norm": 0.04907, "time": 0.89257}
+{"mode": "val", "epoch": 43, "iter": 6, "lr": 0.00027, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 44, "iter": 40, "lr": 0.00019, "memory": 4754, "data_time": 0.66822, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00305, "loss": 0.00305, "grad_norm": 0.06524, "time": 0.89656}
+{"mode": "val", "epoch": 44, "iter": 6, "lr": 0.00017, "top1_acc": 0.98333, "top5_acc": 0.99444, "mean_class_accuracy": 0.98333}
+{"mode": "train", "epoch": 45, "iter": 40, "lr": 0.00011, "memory": 4754, "data_time": 0.70366, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00337, "loss": 0.00337, "grad_norm": 0.07661, "time": 0.90708}
+{"mode": "val", "epoch": 45, "iter": 6, "lr": 0.0001, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 46, "iter": 40, "lr": 5e-05, "memory": 4754, "data_time": 0.6827, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00214, "loss": 0.00214, "grad_norm": 0.04239, "time": 0.93716}
+{"mode": "val", "epoch": 46, "iter": 6, "lr": 4e-05, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 47, "iter": 40, "lr": 2e-05, "memory": 4754, "data_time": 0.64148, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.0023, "loss": 0.0023, "grad_norm": 0.05764, "time": 0.86877}
+{"mode": "val", "epoch": 47, "iter": 6, "lr": 1e-05, "top1_acc": 0.99444, "top5_acc": 1.0, "mean_class_accuracy": 0.99444}
+{"mode": "train", "epoch": 48, "iter": 40, "lr": 0.0, "memory": 4754, "data_time": 0.71219, "top1_acc": 1.0, "top5_acc": 1.0, "loss_cls": 0.00445, "loss": 0.00445, "grad_norm": 0.09933, "time": 0.91751}
+{"mode": "val", "epoch": 48, "iter": 6, "lr": 0.0, "top1_acc": 0.99444, "top5_acc": 0.99444, "mean_class_accuracy": 0.99444}

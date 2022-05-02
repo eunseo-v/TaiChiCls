@@ -1,0 +1,3 @@
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp6/NSNR-linear5-T9A2.py ./model_pth/exp6/NSNR-linear5-T9A2-limb/best_top1_acc_epoch_36.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp6/NSNR-linear5-T9A4.py ./model_pth/exp6/NSNR-linear5-T9A4-limb/best_top1_acc_epoch_32.pth
+CUDA_VISIBLE_DEVICES=3 python ./tools/test.py configs/exp6/NSNR-linear5-T9A8.py ./model_pth/exp6/NSNR-linear5-T9A8-limb/best_top1_acc_epoch_31.pth
