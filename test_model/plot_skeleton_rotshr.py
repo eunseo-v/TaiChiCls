@@ -7,6 +7,7 @@ os.sys.path.append(
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import random
 def rotation_matrix(axis, theta):
     """
     Return the rotation matrix associated with counterclockwise rotation about
@@ -46,35 +47,52 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-def plt_uni_ske(plot_cls, plt_part, skeleton_xyz):
-    '''
-        Input: 
-            action_class: str 
-            plt_part: int
-            skeleton_xyz: float 
-    '''
-    # 画布位置调整
+
+if __name__ == '__main__':
+    project_folder_path = os.path.abspath('.')[
+        :os.path.abspath('.').find('myposec3d') + len('myposec3d')
+    ]
+    taichi_raw_rel_path = 'data/taichi/action_mod.npy'
+    taichi_np_dict = np.load(
+        os.path.join(
+            project_folder_path,
+            taichi_raw_rel_path
+        ),
+        allow_pickle=True, encoding='latin1' 
+    ).item()
+    rotate_angle = -30/180*np.pi # 假设随机的旋转角度为30°
+    sap = 0.5
+    shear_angle = np.array(
+        [
+            [random.uniform(-sap, sap), random.uniform(-sap, sap), random.uniform(-sap, sap)],
+            [random.uniform(-sap, sap), random.uniform(-sap, sap), random.uniform(-sap, sap)]
+        ], dtype = np.float32
+    )
+    # 选择第一类的第一个样本
+    sample = taichi_np_dict['a1'][0] # [72, 3, T]
+    # 选择某一帧
+    skeleton_xyz = sample[..., 10]
     x_min = skeleton_xyz[...,0].min()
     y_min = skeleton_xyz[...,1].min()
     z_min = skeleton_xyz[...,2].min()
-    skeleton = skeleton_xyz - np.array([x_min, y_min, z_min], dtype=np.float32)
-    # # 绕着y轴旋转
-    # joint_rshoulder = skeleton[16,:]
-    # joint_lshoulder = skeleton[44,:]
-    # axis_x = np.cross(
-    #     joint_rshoulder - joint_lshoulder,
-    #     [1, 0, 0]
-    # )
-    # angle_x = angle_between(
-    #     v1=joint_rshoulder - joint_lshoulder,
-    #     v2 = [1, 0, 0]
-    # )
-    # matrix_x = rotation_matrix(
-    #     axis = axis_x, 
-    #     theta = angle_x
-    # )
-    # for i_j, joint in enumerate(skeleton):
-    #     skeleton[i_j] = np.dot(matrix_x, joint)
+    skeleton = skeleton_xyz - np.array([x_min, y_min, z_min], dtype=np.float32) # [72, 3]
+    # 绕着y轴旋转，原始图正对
+    joint_rshoulder = skeleton[16,:]
+    joint_lshoulder = skeleton[44,:]
+    axis_x = np.cross(
+        joint_rshoulder - joint_lshoulder,
+        [1, 0, 0]
+    )
+    angle_x = angle_between(
+        v1=joint_rshoulder - joint_lshoulder,
+        v2 = [1, 0, 0]
+    )
+    matrix_x = rotation_matrix(
+        axis = axis_x, 
+        theta = angle_x
+    )
+    for i_j, joint in enumerate(skeleton):
+        skeleton[i_j] = np.dot(matrix_x, joint)
     
     # 每一个通道关节点的颜色相同
     fig, ax = plt.subplots()
@@ -99,8 +117,7 @@ def plt_uni_ske(plot_cls, plt_part, skeleton_xyz):
     color = ["red","green","black","orange","purple"]
     for i,keypoints in enumerate(keypoints_group):
         ax.scatter(
-            # x = -skeleton[keypoints,0], y = skeleton[keypoints,1],
-            x = skeleton[keypoints,0], y = skeleton[keypoints,1], # 为了能和论文的图有对比
+            x = -skeleton[keypoints,0], y = skeleton[keypoints,1],
             s = 30, c = color[i]
         )    
     # 点连线
@@ -137,51 +154,85 @@ def plt_uni_ske(plot_cls, plt_part, skeleton_xyz):
     for i, limbs in enumerate(limbs_group):
         for (st_idx, end_idx) in limbs:
             ax.plot(
-                # [-skeleton[st_idx,0], -skeleton[end_idx,0]],
-                [skeleton[st_idx,0], skeleton[end_idx,0]], # 为了能和论文的图有对比
+                [-skeleton[st_idx,0], -skeleton[end_idx,0]],
                 [skeleton[st_idx,1], skeleton[end_idx,1]],
                 c = line_color[i], 
-                linewidth = '1', ls = 'dotted'
+                linewidth = '1', # ls = 'dotted'
             )
-    ax.set(aspect=0.8)
+    ax.set(aspect=0.7)
     ax.set_xticks([])
     ax.set_yticks([])
     [ax.spines[loc_axis].set_visible(False) for loc_axis in ['top','right','bottom','left']]
-
-    fig_name = 'TaiChi-skeleton-{}-{}.png'.format(plot_cls, plt_part)
     ax.get_figure().savefig(
         os.path.join(
             project_folder_path,
-            'fig_TaiChi',
-            fig_name
+            'fig_paper/nsnr.png'
         )
     )
-
-
-if __name__ == '__main__':
-    '''
-        plot a sample from a6 to a10
-    '''
-    plot_cls = 'a9' 
-    plot_idx = 0 # 画第一个样本
-    plt_part = 6 # 画的帧数
-    project_folder_path = os.path.abspath('.')[
-        :os.path.abspath('.').find('myposec3d') + len('myposec3d')
-    ]
-    taichi_raw_rel_path = 'data/taichi/action_mod.npy'
-    taichi_np_dict = np.load(
+    # 画出随机rotate后的骨架图
+    skeleton_rot = skeleton
+    matrix_y = rotation_matrix(
+        axis = np.array([0, 1, 0]), # 只绕着y轴旋转
+        theta = rotate_angle
+    )
+    for i_j, joint in enumerate(skeleton_rot):
+        skeleton_rot[i_j] = np.dot(matrix_y, joint)
+    fig2, ax2= plt.subplots()
+    for i,keypoints in enumerate(keypoints_group):
+        ax2.scatter(
+            x = -skeleton_rot[keypoints,0], y = skeleton_rot[keypoints,1],
+            s = 30, c = color[i]
+        ) 
+    for i, limbs in enumerate(limbs_group):
+        for (st_idx, end_idx) in limbs:
+            ax2.plot(
+                [-skeleton_rot[st_idx,0], -skeleton_rot[end_idx,0]],
+                [skeleton_rot[st_idx,1], skeleton_rot[end_idx,1]],
+                c = line_color[i], 
+                linewidth = '1', # ls = 'dotted'
+            )
+    ax2.set(aspect=0.7)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    [ax2.spines[loc_axis].set_visible(False) for loc_axis in ['top','right','bottom','left']]
+    ax2.get_figure().savefig(
         os.path.join(
             project_folder_path,
-            taichi_raw_rel_path
-        ),
-        allow_pickle=True, encoding='latin1' 
-    ).item()
-    # 选择第一类的第一个样本
-    sample = taichi_np_dict[plot_cls][plot_idx] # [72, 3, T]
-    frame_num = sample.shape[-1]
-
-    for i, frame_idx in enumerate(range(0, frame_num, frame_num//plt_part)):
-        skeleton_xyz = sample[..., frame_idx]
-        plt_uni_ske(plot_cls, i, skeleton_xyz)
-
-    
+            'fig_paper/nswr.png'
+        )
+    )
+    # 画出shear后的图
+    skeleton_shr = skeleton
+    R = np.array(
+        [
+            [1, shear_angle[0,0], shear_angle[1, 0]],
+            [shear_angle[0, 1], 1, shear_angle[1, 1]],
+            [shear_angle[0, 2], shear_angle[1, 2], 1]
+        ]
+    )
+    for i_j, joint in enumerate(skeleton_shr):
+        skeleton_shr[i_j] = np.dot(R, joint)
+    fig3, ax3= plt.subplots()
+    for i,keypoints in enumerate(keypoints_group):
+        ax3.scatter(
+            x = -skeleton_rot[keypoints,0], y = skeleton_rot[keypoints,1],
+            s = 30, c = color[i]
+        ) 
+    for i, limbs in enumerate(limbs_group):
+        for (st_idx, end_idx) in limbs:
+            ax3.plot(
+                [-skeleton_rot[st_idx,0], -skeleton_rot[end_idx,0]],
+                [skeleton_rot[st_idx,1], skeleton_rot[end_idx,1]],
+                c = line_color[i], 
+                linewidth = '1', # ls = 'dotted'
+            )
+    ax3.set(aspect=0.7)
+    ax3.set_xticks([])
+    ax3.set_yticks([])
+    [ax3.spines[loc_axis].set_visible(False) for loc_axis in ['top','right','bottom','left']]
+    ax3.get_figure().savefig(
+        os.path.join(
+            project_folder_path,
+            'fig_paper/wsnr.png'
+        )
+    )

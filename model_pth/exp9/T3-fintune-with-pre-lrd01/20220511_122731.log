@@ -1,0 +1,654 @@
+2022-05-11 12:27:31,373 - mmaction - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.8.12 | packaged by conda-forge | (default, Oct 12 2021, 21:57:06) [GCC 9.4.0]
+CUDA available: True
+GPU 0,1,2,3: NVIDIA GeForce RTX 3090
+CUDA_HOME: /usr/local/cuda
+NVCC: Build cuda_11.1.TC455_06.29190527_0
+GCC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0
+PyTorch: 1.9.1+cu111
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.1.2 (Git Hash 98be7e8afa711dc9b66c8ff3504129cb82013cdb)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.1
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86
+  - CuDNN 8.0.5
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.1, CUDNN_VERSION=8.0.5, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.9.1, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, 
+
+TorchVision: 0.10.1+cu111
+OpenCV: 4.5.5
+MMCV: 1.4.2
+MMCV Compiler: GCC 7.3
+MMCV CUDA Compiler: 11.1
+MMAction2: 0.20.0+14525fe
+------------------------------------------------------------
+
+2022-05-11 12:27:31,373 - mmaction - INFO - Distributed training: True
+2022-05-11 12:27:31,681 - mmaction - INFO - Config: model = dict(
+    type='Recognizer3D',
+    backbone=dict(
+        type='ResNet3dSlowOnly',
+        depth=50,
+        pretrained=None,
+        in_channels=17,
+        base_channels=32,
+        num_stages=3,
+        out_indices=(2, ),
+        stage_blocks=(4, 6, 3),
+        conv1_stride_s=1,
+        pool1_stride_s=1,
+        inflate=(0, 1, 1),
+        spatial_strides=(2, 2, 2),
+        temporal_strides=(1, 1, 2),
+        dilations=(1, 1, 1)),
+    cls_head=dict(
+        type='I3DHead',
+        in_channels=512,
+        num_classes=10,
+        spatial_type='avg',
+        dropout_ratio=0.5),
+    train_cfg=dict(),
+    test_cfg=dict(average_clips='prob'))
+dataset_type = 'PoseDataset'
+ann_file_train = 'data/ds_taichi/TEST3AUG4/NSNR/train_data.pkl'
+ann_file_val = 'data/ds_taichi/TEST3AUG4/NSNR/test_data.pkl'
+keypoints = [13, 14, 14, 15, 15, 44, 16, 45, 17, 47, 19, 5, 1, 6, 2, 7, 3]
+left = [5, 6, 7, 44, 45, 47]
+right = [1, 2, 3, 16, 17, 19]
+train_pipeline = [
+    dict(type='UniformSampleFrames', clip_len=48),
+    dict(type='PoseDecode'),
+    dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+    dict(type='Resize', scale=(-1, 64)),
+    dict(type='RandomResizedCrop', area_range=(0.56, 1.0)),
+    dict(type='Resize', scale=(56, 56), keep_ratio=False),
+    dict(
+        type='Flip',
+        flip_ratio=0.5,
+        left_kp=[5, 6, 7, 44, 45, 47],
+        right_kp=[1, 2, 3, 16, 17, 19]),
+    dict(
+        type='GenerateTaiChi17PoseTarget',
+        sigma=0.6,
+        use_score=True,
+        with_kp=True,
+        with_limb=False),
+    dict(type='FormatShape', input_format='NCTHW'),
+    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs', 'label'])
+]
+val_pipeline = [
+    dict(type='UniformSampleFrames', clip_len=48, num_clips=1, test_mode=True),
+    dict(type='PoseDecode'),
+    dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+    dict(type='Resize', scale=(-1, 64)),
+    dict(type='CenterCrop', crop_size=64),
+    dict(
+        type='GenerateTaiChi17PoseTarget',
+        sigma=0.6,
+        use_score=True,
+        with_kp=True,
+        with_limb=False),
+    dict(type='FormatShape', input_format='NCTHW'),
+    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs'])
+]
+test_pipeline = [
+    dict(
+        type='UniformSampleFrames', clip_len=48, num_clips=10, test_mode=True),
+    dict(type='PoseDecode'),
+    dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+    dict(type='Resize', scale=(-1, 64)),
+    dict(type='CenterCrop', crop_size=64),
+    dict(
+        type='GenerateTaiChi17PoseTarget',
+        sigma=0.6,
+        use_score=True,
+        with_kp=True,
+        with_limb=False,
+        double=True,
+        left_kp=[5, 6, 7, 44, 45, 47],
+        right_kp=[1, 2, 3, 16, 17, 19]),
+    dict(type='FormatShape', input_format='NCTHW'),
+    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+    dict(type='ToTensor', keys=['imgs'])
+]
+data = dict(
+    videos_per_gpu=8,
+    workers_per_gpu=4,
+    test_dataloader=dict(videos_per_gpu=4),
+    train=dict(
+        type='RepeatDataset',
+        times=15,
+        dataset=dict(
+            type='PoseDataset',
+            ann_file='data/ds_taichi/TEST3AUG4/NSNR/train_data.pkl',
+            data_prefix='',
+            pipeline=[
+                dict(type='UniformSampleFrames', clip_len=48),
+                dict(type='PoseDecode'),
+                dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+                dict(type='Resize', scale=(-1, 64)),
+                dict(type='RandomResizedCrop', area_range=(0.56, 1.0)),
+                dict(type='Resize', scale=(56, 56), keep_ratio=False),
+                dict(
+                    type='Flip',
+                    flip_ratio=0.5,
+                    left_kp=[5, 6, 7, 44, 45, 47],
+                    right_kp=[1, 2, 3, 16, 17, 19]),
+                dict(
+                    type='GenerateTaiChi17PoseTarget',
+                    sigma=0.6,
+                    use_score=True,
+                    with_kp=True,
+                    with_limb=False),
+                dict(type='FormatShape', input_format='NCTHW'),
+                dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+                dict(type='ToTensor', keys=['imgs', 'label'])
+            ])),
+    val=dict(
+        type='PoseDataset',
+        ann_file='data/ds_taichi/TEST3AUG4/NSNR/test_data.pkl',
+        data_prefix='',
+        pipeline=[
+            dict(
+                type='UniformSampleFrames',
+                clip_len=48,
+                num_clips=1,
+                test_mode=True),
+            dict(type='PoseDecode'),
+            dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+            dict(type='Resize', scale=(-1, 64)),
+            dict(type='CenterCrop', crop_size=64),
+            dict(
+                type='GenerateTaiChi17PoseTarget',
+                sigma=0.6,
+                use_score=True,
+                with_kp=True,
+                with_limb=False),
+            dict(type='FormatShape', input_format='NCTHW'),
+            dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+            dict(type='ToTensor', keys=['imgs'])
+        ]),
+    test=dict(
+        type='PoseDataset',
+        ann_file='data/ds_taichi/TEST3AUG4/NSNR/test_data.pkl',
+        data_prefix='',
+        pipeline=[
+            dict(
+                type='UniformSampleFrames',
+                clip_len=48,
+                num_clips=10,
+                test_mode=True),
+            dict(type='PoseDecode'),
+            dict(type='PoseCompact', hw_ratio=1.0, allow_imgpad=True),
+            dict(type='Resize', scale=(-1, 64)),
+            dict(type='CenterCrop', crop_size=64),
+            dict(
+                type='GenerateTaiChi17PoseTarget',
+                sigma=0.6,
+                use_score=True,
+                with_kp=True,
+                with_limb=False,
+                double=True,
+                left_kp=[5, 6, 7, 44, 45, 47],
+                right_kp=[1, 2, 3, 16, 17, 19]),
+            dict(type='FormatShape', input_format='NCTHW'),
+            dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+            dict(type='ToTensor', keys=['imgs'])
+        ]))
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0003)
+optimizer_config = dict(grad_clip=dict(max_norm=40, norm_type=2))
+lr_config = dict(policy='CosineAnnealing', by_epoch=False, min_lr=0)
+total_epochs = 24
+checkpoint_config = dict(interval=1)
+workflow = [('train', 1)]
+evaluation = dict(
+    interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'], topk=(1, 5))
+log_config = dict(interval=40, hooks=[dict(type='TextLoggerHook')])
+output_config = dict(
+    out='./model_pth/exp9/T3-fintune-with-pre-lrd01/test_result/results.pkl')
+eval_config = dict(
+    metric_out='./model_pth/exp9/T3-fintune-with-pre-lrd01/test_result',
+    eval=[
+        'top_k_accuracy', 'mean_class_accuracy', 'confusion_matrix',
+        't_sne_vis'
+    ])
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+work_dir = './model_pth/exp9/T3-fintune-with-pre-lrd01'
+load_from = './model_pth/17part_ntu60_xsub_kp_0401/best_top1_acc_epoch_24.pth'
+resume_from = None
+find_unused_parameters = False
+gpu_ids = range(0, 4)
+omnisource = False
+module_hooks = []
+
+2022-05-11 12:27:31,681 - mmaction - INFO - Set random seed to 42, deterministic: True
+2022-05-11 12:27:31,877 - mmaction - INFO - 560 videos remain after valid thresholding
+2022-05-11 12:27:36,226 - mmaction - INFO - 60 videos remain after valid thresholding
+2022-05-11 12:27:36,227 - mmaction - INFO - load checkpoint from local path: ./model_pth/17part_ntu60_xsub_kp_0401/best_top1_acc_epoch_24.pth
+2022-05-11 12:27:36,420 - mmaction - WARNING - The model and loaded state dict do not match exactly
+
+size mismatch for cls_head.fc_cls.weight: copying a param with shape torch.Size([60, 512]) from checkpoint, the shape in current model is torch.Size([10, 512]).
+size mismatch for cls_head.fc_cls.bias: copying a param with shape torch.Size([60]) from checkpoint, the shape in current model is torch.Size([10]).
+2022-05-11 12:27:36,420 - mmaction - INFO - Start running, host: yl@83090-jin, work_dir: /home/yl/myposec3d/model_pth/exp9/T3-fintune-with-pre-lrd01
+2022-05-11 12:27:36,421 - mmaction - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) DistSamplerSeedHook                
+(NORMAL      ) DistEvalHook                       
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) DistEvalHook                       
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) DistEvalHook                       
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) DistSamplerSeedHook                
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2022-05-11 12:27:36,421 - mmaction - INFO - workflow: [('train', 1)], max: 24 epochs
+2022-05-11 12:27:36,421 - mmaction - INFO - Checkpoints will be saved to /home/yl/myposec3d/model_pth/exp9/T3-fintune-with-pre-lrd01 by HardDiskBackend.
+2022-05-11 12:28:09,652 - mmaction - INFO - Epoch [1][40/263]	lr: 9.999e-03, eta: 1:26:49, time: 0.831, data_time: 0.626, memory: 4810, top1_acc: 0.5727, top5_acc: 0.8766, loss_cls: 1.4387, loss: 1.4387, grad_norm: 2.2645
+2022-05-11 12:28:17,193 - mmaction - INFO - Epoch [1][80/263]	lr: 9.996e-03, eta: 0:52:55, time: 0.189, data_time: 0.000, memory: 4810, top1_acc: 0.9695, top5_acc: 1.0000, loss_cls: 0.2265, loss: 0.2265, grad_norm: 1.5801
+2022-05-11 12:28:24,631 - mmaction - INFO - Epoch [1][120/263]	lr: 9.991e-03, eta: 0:41:27, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 0.9969, top5_acc: 1.0000, loss_cls: 0.0649, loss: 0.0649, grad_norm: 0.8065
+2022-05-11 12:28:32,197 - mmaction - INFO - Epoch [1][160/263]	lr: 9.984e-03, eta: 0:35:44, time: 0.189, data_time: 0.000, memory: 4810, top1_acc: 0.9969, top5_acc: 1.0000, loss_cls: 0.0500, loss: 0.0500, grad_norm: 0.7887
+2022-05-11 12:28:39,767 - mmaction - INFO - Epoch [1][200/263]	lr: 9.975e-03, eta: 0:32:15, time: 0.189, data_time: 0.000, memory: 4810, top1_acc: 0.9969, top5_acc: 1.0000, loss_cls: 0.0320, loss: 0.0320, grad_norm: 0.6209
+2022-05-11 12:28:47,350 - mmaction - INFO - Epoch [1][240/263]	lr: 9.965e-03, eta: 0:29:54, time: 0.190, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0207, loss: 0.0207, grad_norm: 0.3978
+2022-05-11 12:28:52,134 - mmaction - INFO - Saving checkpoint at 1 epochs
+2022-05-11 12:29:17,463 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:29:17,463 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:29:17,463 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:29:17,464 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:29:17,511 - mmaction - INFO - Now best checkpoint is saved as best_top1_acc_epoch_1.pth.
+2022-05-11 12:29:17,511 - mmaction - INFO - Best top1_acc is 1.0000 at 1 epoch.
+2022-05-11 12:29:17,511 - mmaction - INFO - Epoch(val) [1][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:29:49,787 - mmaction - INFO - Epoch [2][40/263]	lr: 9.944e-03, eta: 0:34:06, time: 0.807, data_time: 0.619, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0155, loss: 0.0155, grad_norm: 0.3058
+2022-05-11 12:29:57,243 - mmaction - INFO - Epoch [2][80/263]	lr: 9.928e-03, eta: 0:32:05, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0162, loss: 0.0162, grad_norm: 0.3352
+2022-05-11 12:30:04,645 - mmaction - INFO - Epoch [2][120/263]	lr: 9.910e-03, eta: 0:30:27, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 0.9984, top5_acc: 1.0000, loss_cls: 0.0198, loss: 0.0198, grad_norm: 0.5409
+2022-05-11 12:30:12,067 - mmaction - INFO - Epoch [2][160/263]	lr: 9.890e-03, eta: 0:29:06, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0135, loss: 0.0135, grad_norm: 0.2977
+2022-05-11 12:30:19,508 - mmaction - INFO - Epoch [2][200/263]	lr: 9.868e-03, eta: 0:27:59, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 0.9977, top5_acc: 1.0000, loss_cls: 0.0178, loss: 0.0178, grad_norm: 0.4267
+2022-05-11 12:30:27,012 - mmaction - INFO - Epoch [2][240/263]	lr: 9.845e-03, eta: 0:27:01, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0156, loss: 0.0156, grad_norm: 0.4088
+2022-05-11 12:30:31,725 - mmaction - INFO - Saving checkpoint at 2 epochs
+2022-05-11 12:30:57,118 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:30:57,118 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:30:57,118 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:30:57,119 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:30:57,119 - mmaction - INFO - Epoch(val) [2][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:31:29,262 - mmaction - INFO - Epoch [3][40/263]	lr: 9.804e-03, eta: 0:29:11, time: 0.804, data_time: 0.610, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0121, loss: 0.0121, grad_norm: 0.3261
+2022-05-11 12:31:36,636 - mmaction - INFO - Epoch [3][80/263]	lr: 9.775e-03, eta: 0:28:14, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0080, loss: 0.0080, grad_norm: 0.1810
+2022-05-11 12:31:44,115 - mmaction - INFO - Epoch [3][120/263]	lr: 9.745e-03, eta: 0:27:23, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0074, loss: 0.0074, grad_norm: 0.1777
+2022-05-11 12:31:51,570 - mmaction - INFO - Epoch [3][160/263]	lr: 9.712e-03, eta: 0:26:38, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0079, loss: 0.0079, grad_norm: 0.1883
+2022-05-11 12:31:59,041 - mmaction - INFO - Epoch [3][200/263]	lr: 9.678e-03, eta: 0:25:56, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0060, loss: 0.0060, grad_norm: 0.1613
+2022-05-11 12:32:06,489 - mmaction - INFO - Epoch [3][240/263]	lr: 9.642e-03, eta: 0:25:18, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0066, loss: 0.0066, grad_norm: 0.1729
+2022-05-11 12:32:11,071 - mmaction - INFO - Saving checkpoint at 3 epochs
+2022-05-11 12:32:36,515 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:32:36,516 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:32:36,516 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:32:36,517 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:32:36,517 - mmaction - INFO - Epoch(val) [3][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:33:08,893 - mmaction - INFO - Epoch [4][40/263]	lr: 9.581e-03, eta: 0:26:41, time: 0.809, data_time: 0.615, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0068, loss: 0.0068, grad_norm: 0.2477
+2022-05-11 12:33:16,352 - mmaction - INFO - Epoch [4][80/263]	lr: 9.541e-03, eta: 0:26:03, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 0.9984, top5_acc: 1.0000, loss_cls: 0.0092, loss: 0.0092, grad_norm: 0.3000
+2022-05-11 12:33:23,806 - mmaction - INFO - Epoch [4][120/263]	lr: 9.498e-03, eta: 0:25:27, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0069, loss: 0.0069, grad_norm: 0.1867
+2022-05-11 12:33:31,303 - mmaction - INFO - Epoch [4][160/263]	lr: 9.454e-03, eta: 0:24:55, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0107, loss: 0.0107, grad_norm: 0.2523
+2022-05-11 12:33:38,808 - mmaction - INFO - Epoch [4][200/263]	lr: 9.408e-03, eta: 0:24:24, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0057, loss: 0.0057, grad_norm: 0.1898
+2022-05-11 12:33:46,307 - mmaction - INFO - Epoch [4][240/263]	lr: 9.360e-03, eta: 0:23:55, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0066, loss: 0.0066, grad_norm: 0.2016
+2022-05-11 12:33:51,029 - mmaction - INFO - Saving checkpoint at 4 epochs
+2022-05-11 12:34:16,375 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:34:16,376 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:34:16,376 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:34:16,376 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:34:16,377 - mmaction - INFO - Epoch(val) [4][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:34:48,494 - mmaction - INFO - Epoch [5][40/263]	lr: 9.281e-03, eta: 0:24:49, time: 0.803, data_time: 0.607, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0056, loss: 0.0056, grad_norm: 0.1444
+2022-05-11 12:34:55,899 - mmaction - INFO - Epoch [5][80/263]	lr: 9.229e-03, eta: 0:24:20, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0039, loss: 0.0039, grad_norm: 0.1274
+2022-05-11 12:35:03,305 - mmaction - INFO - Epoch [5][120/263]	lr: 9.175e-03, eta: 0:23:51, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0034, loss: 0.0034, grad_norm: 0.0942
+2022-05-11 12:35:10,833 - mmaction - INFO - Epoch [5][160/263]	lr: 9.119e-03, eta: 0:23:25, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0032, loss: 0.0032, grad_norm: 0.0863
+2022-05-11 12:35:18,415 - mmaction - INFO - Epoch [5][200/263]	lr: 9.062e-03, eta: 0:23:00, time: 0.190, data_time: 0.000, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0065, loss: 0.0065, grad_norm: 0.1556
+2022-05-11 12:35:25,882 - mmaction - INFO - Epoch [5][240/263]	lr: 9.003e-03, eta: 0:22:36, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0038, loss: 0.0038, grad_norm: 0.1399
+2022-05-11 12:35:30,409 - mmaction - INFO - Saving checkpoint at 5 epochs
+2022-05-11 12:35:56,036 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:35:56,036 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:35:56,037 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:35:56,037 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:35:56,037 - mmaction - INFO - Epoch(val) [5][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:36:28,466 - mmaction - INFO - Epoch [6][40/263]	lr: 8.907e-03, eta: 0:23:15, time: 0.810, data_time: 0.617, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0025, loss: 0.0025, grad_norm: 0.0786
+2022-05-11 12:36:35,931 - mmaction - INFO - Epoch [6][80/263]	lr: 8.844e-03, eta: 0:22:50, time: 0.187, data_time: 0.001, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0041, loss: 0.0041, grad_norm: 0.1320
+2022-05-11 12:36:43,387 - mmaction - INFO - Epoch [6][120/263]	lr: 8.780e-03, eta: 0:22:27, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0027, loss: 0.0027, grad_norm: 0.0851
+2022-05-11 12:36:50,864 - mmaction - INFO - Epoch [6][160/263]	lr: 8.714e-03, eta: 0:22:04, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0033, loss: 0.0033, grad_norm: 0.1108
+2022-05-11 12:36:58,289 - mmaction - INFO - Epoch [6][200/263]	lr: 8.646e-03, eta: 0:21:42, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0030, loss: 0.0030, grad_norm: 0.0891
+2022-05-11 12:37:05,813 - mmaction - INFO - Epoch [6][240/263]	lr: 8.578e-03, eta: 0:21:21, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0056, loss: 0.0056, grad_norm: 0.1611
+2022-05-11 12:37:10,340 - mmaction - INFO - Saving checkpoint at 6 epochs
+2022-05-11 12:37:35,849 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:37:35,849 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:37:35,849 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:37:35,850 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:37:35,850 - mmaction - INFO - Epoch(val) [6][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:38:08,297 - mmaction - INFO - Epoch [7][40/263]	lr: 8.466e-03, eta: 0:21:49, time: 0.811, data_time: 0.616, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0040, loss: 0.0040, grad_norm: 0.1269
+2022-05-11 12:38:15,774 - mmaction - INFO - Epoch [7][80/263]	lr: 8.394e-03, eta: 0:21:27, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0024, loss: 0.0024, grad_norm: 0.0635
+2022-05-11 12:38:23,252 - mmaction - INFO - Epoch [7][120/263]	lr: 8.320e-03, eta: 0:21:06, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0029, loss: 0.0029, grad_norm: 0.0940
+2022-05-11 12:38:30,756 - mmaction - INFO - Epoch [7][160/263]	lr: 8.245e-03, eta: 0:20:46, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0032, loss: 0.0032, grad_norm: 0.0915
+2022-05-11 12:38:38,204 - mmaction - INFO - Epoch [7][200/263]	lr: 8.169e-03, eta: 0:20:27, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0027, loss: 0.0027, grad_norm: 0.0779
+2022-05-11 12:38:45,715 - mmaction - INFO - Epoch [7][240/263]	lr: 8.091e-03, eta: 0:20:08, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0048, loss: 0.0048, grad_norm: 0.2026
+2022-05-11 12:38:50,263 - mmaction - INFO - Saving checkpoint at 7 epochs
+2022-05-11 12:39:15,846 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:39:15,846 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:39:15,846 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:39:15,847 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:39:15,847 - mmaction - INFO - Epoch(val) [7][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:39:48,069 - mmaction - INFO - Epoch [8][40/263]	lr: 7.966e-03, eta: 0:20:27, time: 0.805, data_time: 0.622, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0027, loss: 0.0027, grad_norm: 0.0991
+2022-05-11 12:39:55,433 - mmaction - INFO - Epoch [8][80/263]	lr: 7.886e-03, eta: 0:20:07, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0047, loss: 0.0047, grad_norm: 0.1666
+2022-05-11 12:40:02,882 - mmaction - INFO - Epoch [8][120/263]	lr: 7.804e-03, eta: 0:19:48, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0021, loss: 0.0021, grad_norm: 0.0563
+2022-05-11 12:40:10,339 - mmaction - INFO - Epoch [8][160/263]	lr: 7.721e-03, eta: 0:19:30, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0029, loss: 0.0029, grad_norm: 0.0947
+2022-05-11 12:40:17,757 - mmaction - INFO - Epoch [8][200/263]	lr: 7.637e-03, eta: 0:19:12, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0022, loss: 0.0022, grad_norm: 0.0818
+2022-05-11 12:40:25,230 - mmaction - INFO - Epoch [8][240/263]	lr: 7.552e-03, eta: 0:18:54, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0024, loss: 0.0024, grad_norm: 0.0763
+2022-05-11 12:40:29,910 - mmaction - INFO - Saving checkpoint at 8 epochs
+2022-05-11 12:40:54,978 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:40:54,979 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:40:54,979 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:40:54,980 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:40:54,980 - mmaction - INFO - Epoch(val) [8][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:41:27,477 - mmaction - INFO - Epoch [9][40/263]	lr: 7.415e-03, eta: 0:19:08, time: 0.812, data_time: 0.624, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0036, loss: 0.0036, grad_norm: 0.1094
+2022-05-11 12:41:34,912 - mmaction - INFO - Epoch [9][80/263]	lr: 7.328e-03, eta: 0:18:50, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0020, loss: 0.0020, grad_norm: 0.0640
+2022-05-11 12:41:42,403 - mmaction - INFO - Epoch [9][120/263]	lr: 7.239e-03, eta: 0:18:32, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0023, loss: 0.0023, grad_norm: 0.0621
+2022-05-11 12:41:49,865 - mmaction - INFO - Epoch [9][160/263]	lr: 7.150e-03, eta: 0:18:15, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0470
+2022-05-11 12:41:57,317 - mmaction - INFO - Epoch [9][200/263]	lr: 7.060e-03, eta: 0:17:59, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0030, loss: 0.0030, grad_norm: 0.1168
+2022-05-11 12:42:04,720 - mmaction - INFO - Epoch [9][240/263]	lr: 6.968e-03, eta: 0:17:42, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0027, loss: 0.0027, grad_norm: 0.0923
+2022-05-11 12:42:09,411 - mmaction - INFO - Saving checkpoint at 9 epochs
+2022-05-11 12:42:34,568 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:42:34,568 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:42:34,568 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:42:34,569 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:42:34,569 - mmaction - INFO - Epoch(val) [9][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:43:06,893 - mmaction - INFO - Epoch [10][40/263]	lr: 6.823e-03, eta: 0:17:50, time: 0.808, data_time: 0.621, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0020, loss: 0.0020, grad_norm: 0.0683
+2022-05-11 12:43:14,237 - mmaction - INFO - Epoch [10][80/263]	lr: 6.730e-03, eta: 0:17:34, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0040, loss: 0.0040, grad_norm: 0.1235
+2022-05-11 12:43:21,603 - mmaction - INFO - Epoch [10][120/263]	lr: 6.637e-03, eta: 0:17:17, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0038, loss: 0.0038, grad_norm: 0.1323
+2022-05-11 12:43:29,046 - mmaction - INFO - Epoch [10][160/263]	lr: 6.542e-03, eta: 0:17:01, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0030, loss: 0.0030, grad_norm: 0.1273
+2022-05-11 12:43:36,511 - mmaction - INFO - Epoch [10][200/263]	lr: 6.447e-03, eta: 0:16:46, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0531
+2022-05-11 12:43:43,972 - mmaction - INFO - Epoch [10][240/263]	lr: 6.352e-03, eta: 0:16:30, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0492
+2022-05-11 12:43:48,522 - mmaction - INFO - Saving checkpoint at 10 epochs
+2022-05-11 12:44:13,897 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:44:13,897 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:44:13,897 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:44:13,897 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:44:13,898 - mmaction - INFO - Epoch(val) [10][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:44:46,445 - mmaction - INFO - Epoch [11][40/263]	lr: 6.200e-03, eta: 0:16:35, time: 0.814, data_time: 0.628, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0029, loss: 0.0029, grad_norm: 0.1043
+2022-05-11 12:44:53,802 - mmaction - INFO - Epoch [11][80/263]	lr: 6.103e-03, eta: 0:16:19, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0021, loss: 0.0021, grad_norm: 0.0654
+2022-05-11 12:45:01,228 - mmaction - INFO - Epoch [11][120/263]	lr: 6.006e-03, eta: 0:16:04, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0033, loss: 0.0033, grad_norm: 0.0879
+2022-05-11 12:45:08,657 - mmaction - INFO - Epoch [11][160/263]	lr: 5.908e-03, eta: 0:15:49, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0031, loss: 0.0031, grad_norm: 0.0972
+2022-05-11 12:45:16,092 - mmaction - INFO - Epoch [11][200/263]	lr: 5.810e-03, eta: 0:15:34, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0502
+2022-05-11 12:45:23,533 - mmaction - INFO - Epoch [11][240/263]	lr: 5.712e-03, eta: 0:15:19, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0035, loss: 0.0035, grad_norm: 0.1174
+2022-05-11 12:45:28,259 - mmaction - INFO - Saving checkpoint at 11 epochs
+2022-05-11 12:45:53,577 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:45:53,577 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:45:53,577 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:45:53,578 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:45:53,578 - mmaction - INFO - Epoch(val) [11][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:46:25,909 - mmaction - INFO - Epoch [12][40/263]	lr: 5.556e-03, eta: 0:15:20, time: 0.808, data_time: 0.621, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0031, loss: 0.0031, grad_norm: 0.1028
+2022-05-11 12:46:33,409 - mmaction - INFO - Epoch [12][80/263]	lr: 5.457e-03, eta: 0:15:05, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0381
+2022-05-11 12:46:40,895 - mmaction - INFO - Epoch [12][120/263]	lr: 5.358e-03, eta: 0:14:51, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0020, loss: 0.0020, grad_norm: 0.0572
+2022-05-11 12:46:48,429 - mmaction - INFO - Epoch [12][160/263]	lr: 5.259e-03, eta: 0:14:37, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0448
+2022-05-11 12:46:55,843 - mmaction - INFO - Epoch [12][200/263]	lr: 5.159e-03, eta: 0:14:22, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0013, loss: 0.0013, grad_norm: 0.0388
+2022-05-11 12:47:03,380 - mmaction - INFO - Epoch [12][240/263]	lr: 5.060e-03, eta: 0:14:08, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0031, loss: 0.0031, grad_norm: 0.1148
+2022-05-11 12:47:08,104 - mmaction - INFO - Saving checkpoint at 12 epochs
+2022-05-11 12:47:33,924 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:47:33,925 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:47:33,925 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:47:33,925 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:47:33,925 - mmaction - INFO - Epoch(val) [12][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:48:06,229 - mmaction - INFO - Epoch [13][40/263]	lr: 4.903e-03, eta: 0:14:07, time: 0.808, data_time: 0.612, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0511
+2022-05-11 12:48:13,755 - mmaction - INFO - Epoch [13][80/263]	lr: 4.803e-03, eta: 0:13:53, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0013, loss: 0.0013, grad_norm: 0.0363
+2022-05-11 12:48:21,115 - mmaction - INFO - Epoch [13][120/263]	lr: 4.704e-03, eta: 0:13:39, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0025, loss: 0.0025, grad_norm: 0.0818
+2022-05-11 12:48:28,531 - mmaction - INFO - Epoch [13][160/263]	lr: 4.605e-03, eta: 0:13:25, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0015, loss: 0.0015, grad_norm: 0.0527
+2022-05-11 12:48:35,989 - mmaction - INFO - Epoch [13][200/263]	lr: 4.506e-03, eta: 0:13:11, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0019, loss: 0.0019, grad_norm: 0.0681
+2022-05-11 12:48:43,415 - mmaction - INFO - Epoch [13][240/263]	lr: 4.407e-03, eta: 0:12:58, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0028, loss: 0.0028, grad_norm: 0.0973
+2022-05-11 12:48:48,090 - mmaction - INFO - Saving checkpoint at 13 epochs
+2022-05-11 12:49:13,489 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:49:13,489 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:49:13,489 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:49:13,490 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:49:13,490 - mmaction - INFO - Epoch(val) [13][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:49:45,648 - mmaction - INFO - Epoch [14][40/263]	lr: 4.251e-03, eta: 0:12:53, time: 0.804, data_time: 0.621, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0022, loss: 0.0022, grad_norm: 0.0735
+2022-05-11 12:49:52,936 - mmaction - INFO - Epoch [14][80/263]	lr: 4.153e-03, eta: 0:12:40, time: 0.182, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0019, loss: 0.0019, grad_norm: 0.0600
+2022-05-11 12:50:00,298 - mmaction - INFO - Epoch [14][120/263]	lr: 4.055e-03, eta: 0:12:26, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0077, loss: 0.0077, grad_norm: 0.1421
+2022-05-11 12:50:07,711 - mmaction - INFO - Epoch [14][160/263]	lr: 3.958e-03, eta: 0:12:13, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0487
+2022-05-11 12:50:15,039 - mmaction - INFO - Epoch [14][200/263]	lr: 3.860e-03, eta: 0:12:00, time: 0.183, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0019, loss: 0.0019, grad_norm: 0.0577
+2022-05-11 12:50:22,414 - mmaction - INFO - Epoch [14][240/263]	lr: 3.764e-03, eta: 0:11:46, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0019, loss: 0.0019, grad_norm: 0.0642
+2022-05-11 12:50:26,955 - mmaction - INFO - Saving checkpoint at 14 epochs
+2022-05-11 12:50:52,795 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:50:52,796 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:50:52,796 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:50:52,796 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:50:52,796 - mmaction - INFO - Epoch(val) [14][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:51:25,269 - mmaction - INFO - Epoch [15][40/263]	lr: 3.612e-03, eta: 0:11:41, time: 0.812, data_time: 0.613, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0015, loss: 0.0015, grad_norm: 0.0468
+2022-05-11 12:51:32,688 - mmaction - INFO - Epoch [15][80/263]	lr: 3.517e-03, eta: 0:11:27, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0015, loss: 0.0015, grad_norm: 0.0389
+2022-05-11 12:51:40,188 - mmaction - INFO - Epoch [15][120/263]	lr: 3.422e-03, eta: 0:11:14, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0417
+2022-05-11 12:51:47,590 - mmaction - INFO - Epoch [15][160/263]	lr: 3.328e-03, eta: 0:11:02, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0026, loss: 0.0026, grad_norm: 0.0968
+2022-05-11 12:51:55,079 - mmaction - INFO - Epoch [15][200/263]	lr: 3.235e-03, eta: 0:10:49, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0448
+2022-05-11 12:52:02,580 - mmaction - INFO - Epoch [15][240/263]	lr: 3.142e-03, eta: 0:10:36, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0020, loss: 0.0020, grad_norm: 0.0549
+2022-05-11 12:52:07,330 - mmaction - INFO - Saving checkpoint at 15 epochs
+2022-05-11 12:52:32,422 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:52:32,423 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:52:32,423 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:52:32,424 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:52:32,424 - mmaction - INFO - Epoch(val) [15][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:53:04,813 - mmaction - INFO - Epoch [16][40/263]	lr: 2.997e-03, eta: 0:10:29, time: 0.810, data_time: 0.620, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0022, loss: 0.0022, grad_norm: 0.0743
+2022-05-11 12:53:12,199 - mmaction - INFO - Epoch [16][80/263]	lr: 2.906e-03, eta: 0:10:16, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0018, loss: 0.0018, grad_norm: 0.0539
+2022-05-11 12:53:19,610 - mmaction - INFO - Epoch [16][120/263]	lr: 2.816e-03, eta: 0:10:03, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0036, loss: 0.0036, grad_norm: 0.1402
+2022-05-11 12:53:27,107 - mmaction - INFO - Epoch [16][160/263]	lr: 2.727e-03, eta: 0:09:51, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0378
+2022-05-11 12:53:34,576 - mmaction - INFO - Epoch [16][200/263]	lr: 2.639e-03, eta: 0:09:38, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0031, loss: 0.0031, grad_norm: 0.1180
+2022-05-11 12:53:42,058 - mmaction - INFO - Epoch [16][240/263]	lr: 2.552e-03, eta: 0:09:26, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0021, loss: 0.0021, grad_norm: 0.0611
+2022-05-11 12:53:46,756 - mmaction - INFO - Saving checkpoint at 16 epochs
+2022-05-11 12:54:12,308 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:54:12,309 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:54:12,309 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:54:12,309 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:54:12,309 - mmaction - INFO - Epoch(val) [16][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:54:45,083 - mmaction - INFO - Epoch [17][40/263]	lr: 2.416e-03, eta: 0:09:17, time: 0.819, data_time: 0.617, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0041, loss: 0.0041, grad_norm: 0.1216
+2022-05-11 12:54:52,437 - mmaction - INFO - Epoch [17][80/263]	lr: 2.332e-03, eta: 0:09:04, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0543
+2022-05-11 12:54:59,749 - mmaction - INFO - Epoch [17][120/263]	lr: 2.248e-03, eta: 0:08:52, time: 0.183, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0019, loss: 0.0019, grad_norm: 0.0595
+2022-05-11 12:55:07,103 - mmaction - INFO - Epoch [17][160/263]	lr: 2.166e-03, eta: 0:08:40, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0018, loss: 0.0018, grad_norm: 0.0560
+2022-05-11 12:55:14,335 - mmaction - INFO - Epoch [17][200/263]	lr: 2.084e-03, eta: 0:08:28, time: 0.181, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0019, loss: 0.0019, grad_norm: 0.0626
+2022-05-11 12:55:21,633 - mmaction - INFO - Epoch [17][240/263]	lr: 2.004e-03, eta: 0:08:16, time: 0.183, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0013, loss: 0.0013, grad_norm: 0.0389
+2022-05-11 12:55:26,173 - mmaction - INFO - Saving checkpoint at 17 epochs
+2022-05-11 12:55:51,833 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:55:51,834 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:55:51,834 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:55:51,834 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:55:51,834 - mmaction - INFO - Epoch(val) [17][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:56:24,084 - mmaction - INFO - Epoch [18][40/263]	lr: 1.880e-03, eta: 0:08:05, time: 0.806, data_time: 0.614, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0018, loss: 0.0018, grad_norm: 0.0621
+2022-05-11 12:56:31,425 - mmaction - INFO - Epoch [18][80/263]	lr: 1.803e-03, eta: 0:07:53, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0491
+2022-05-11 12:56:38,766 - mmaction - INFO - Epoch [18][120/263]	lr: 1.727e-03, eta: 0:07:41, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0023, loss: 0.0023, grad_norm: 0.0815
+2022-05-11 12:56:46,021 - mmaction - INFO - Epoch [18][160/263]	lr: 1.652e-03, eta: 0:07:29, time: 0.181, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0023, loss: 0.0023, grad_norm: 0.0674
+2022-05-11 12:56:53,318 - mmaction - INFO - Epoch [18][200/263]	lr: 1.579e-03, eta: 0:07:17, time: 0.182, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0019, loss: 0.0019, grad_norm: 0.0634
+2022-05-11 12:57:00,628 - mmaction - INFO - Epoch [18][240/263]	lr: 1.507e-03, eta: 0:07:05, time: 0.183, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0020, loss: 0.0020, grad_norm: 0.0556
+2022-05-11 12:57:05,188 - mmaction - INFO - Saving checkpoint at 18 epochs
+2022-05-11 12:57:30,462 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:57:30,462 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:57:30,462 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:57:30,463 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:57:30,463 - mmaction - INFO - Epoch(val) [18][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:58:03,615 - mmaction - INFO - Epoch [19][40/263]	lr: 1.397e-03, eta: 0:06:54, time: 0.829, data_time: 0.642, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0468
+2022-05-11 12:58:10,990 - mmaction - INFO - Epoch [19][80/263]	lr: 1.328e-03, eta: 0:06:42, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0554
+2022-05-11 12:58:18,491 - mmaction - INFO - Epoch [19][120/263]	lr: 1.261e-03, eta: 0:06:30, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0471
+2022-05-11 12:58:25,915 - mmaction - INFO - Epoch [19][160/263]	lr: 1.196e-03, eta: 0:06:18, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0011, loss: 0.0011, grad_norm: 0.0288
+2022-05-11 12:58:33,324 - mmaction - INFO - Epoch [19][200/263]	lr: 1.132e-03, eta: 0:06:07, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0517
+2022-05-11 12:58:40,819 - mmaction - INFO - Epoch [19][240/263]	lr: 1.070e-03, eta: 0:05:55, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 0.9992, top5_acc: 1.0000, loss_cls: 0.0040, loss: 0.0040, grad_norm: 0.1155
+2022-05-11 12:58:45,518 - mmaction - INFO - Saving checkpoint at 19 epochs
+2022-05-11 12:59:10,817 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 12:59:10,818 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 12:59:10,818 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 12:59:10,818 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 12:59:10,818 - mmaction - INFO - Epoch(val) [19][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 12:59:43,318 - mmaction - INFO - Epoch [20][40/263]	lr: 9.749e-04, eta: 0:05:43, time: 0.812, data_time: 0.627, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0015, loss: 0.0015, grad_norm: 0.0405
+2022-05-11 12:59:50,801 - mmaction - INFO - Epoch [20][80/263]	lr: 9.166e-04, eta: 0:05:31, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0448
+2022-05-11 12:59:58,213 - mmaction - INFO - Epoch [20][120/263]	lr: 8.600e-04, eta: 0:05:20, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0022, loss: 0.0022, grad_norm: 0.0591
+2022-05-11 13:00:05,654 - mmaction - INFO - Epoch [20][160/263]	lr: 8.050e-04, eta: 0:05:08, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0015, loss: 0.0015, grad_norm: 0.0515
+2022-05-11 13:00:13,192 - mmaction - INFO - Epoch [20][200/263]	lr: 7.517e-04, eta: 0:04:57, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0030, loss: 0.0030, grad_norm: 0.1516
+2022-05-11 13:00:20,705 - mmaction - INFO - Epoch [20][240/263]	lr: 7.000e-04, eta: 0:04:45, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0431
+2022-05-11 13:00:25,474 - mmaction - INFO - Saving checkpoint at 20 epochs
+2022-05-11 13:00:50,995 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 13:00:50,996 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 13:00:50,996 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 13:00:50,996 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 13:00:50,996 - mmaction - INFO - Epoch(val) [20][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 13:01:23,294 - mmaction - INFO - Epoch [21][40/263]	lr: 6.222e-04, eta: 0:04:32, time: 0.807, data_time: 0.614, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0013, loss: 0.0013, grad_norm: 0.0377
+2022-05-11 13:01:30,712 - mmaction - INFO - Epoch [21][80/263]	lr: 5.749e-04, eta: 0:04:20, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0641
+2022-05-11 13:01:38,097 - mmaction - INFO - Epoch [21][120/263]	lr: 5.295e-04, eta: 0:04:09, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0416
+2022-05-11 13:01:45,557 - mmaction - INFO - Epoch [21][160/263]	lr: 4.858e-04, eta: 0:03:58, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0011, loss: 0.0011, grad_norm: 0.0256
+2022-05-11 13:01:52,956 - mmaction - INFO - Epoch [21][200/263]	lr: 4.439e-04, eta: 0:03:47, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0016, loss: 0.0016, grad_norm: 0.0438
+2022-05-11 13:02:00,473 - mmaction - INFO - Epoch [21][240/263]	lr: 4.038e-04, eta: 0:03:35, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0013, loss: 0.0013, grad_norm: 0.0455
+2022-05-11 13:02:05,212 - mmaction - INFO - Saving checkpoint at 21 epochs
+2022-05-11 13:02:30,492 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 13:02:30,492 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 13:02:30,492 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 13:02:30,493 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 13:02:30,493 - mmaction - INFO - Epoch(val) [21][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 13:03:02,987 - mmaction - INFO - Epoch [22][40/263]	lr: 3.443e-04, eta: 0:03:21, time: 0.812, data_time: 0.625, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0018, loss: 0.0018, grad_norm: 0.0691
+2022-05-11 13:03:10,330 - mmaction - INFO - Epoch [22][80/263]	lr: 3.090e-04, eta: 0:03:10, time: 0.184, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0019, loss: 0.0019, grad_norm: 0.0662
+2022-05-11 13:03:17,733 - mmaction - INFO - Epoch [22][120/263]	lr: 2.754e-04, eta: 0:02:58, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0399
+2022-05-11 13:03:25,030 - mmaction - INFO - Epoch [22][160/263]	lr: 2.438e-04, eta: 0:02:47, time: 0.182, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0018, loss: 0.0018, grad_norm: 0.0507
+2022-05-11 13:03:32,346 - mmaction - INFO - Epoch [22][200/263]	lr: 2.140e-04, eta: 0:02:36, time: 0.183, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0015, loss: 0.0015, grad_norm: 0.0396
+2022-05-11 13:03:39,763 - mmaction - INFO - Epoch [22][240/263]	lr: 1.862e-04, eta: 0:02:25, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0012, loss: 0.0012, grad_norm: 0.0329
+2022-05-11 13:03:44,397 - mmaction - INFO - Saving checkpoint at 22 epochs
+2022-05-11 13:04:09,665 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 13:04:09,665 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 13:04:09,665 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 13:04:09,666 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 13:04:09,666 - mmaction - INFO - Epoch(val) [22][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 13:04:41,900 - mmaction - INFO - Epoch [23][40/263]	lr: 1.462e-04, eta: 0:02:10, time: 0.806, data_time: 0.616, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0022, loss: 0.0022, grad_norm: 0.0716
+2022-05-11 13:04:49,316 - mmaction - INFO - Epoch [23][80/263]	lr: 1.232e-04, eta: 0:01:59, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0443
+2022-05-11 13:04:56,627 - mmaction - INFO - Epoch [23][120/263]	lr: 1.022e-04, eta: 0:01:48, time: 0.183, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0546
+2022-05-11 13:05:03,962 - mmaction - INFO - Epoch [23][160/263]	lr: 8.318e-05, eta: 0:01:37, time: 0.183, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0013, loss: 0.0013, grad_norm: 0.0360
+2022-05-11 13:05:11,373 - mmaction - INFO - Epoch [23][200/263]	lr: 6.608e-05, eta: 0:01:26, time: 0.185, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0011, loss: 0.0011, grad_norm: 0.0308
+2022-05-11 13:05:18,806 - mmaction - INFO - Epoch [23][240/263]	lr: 5.092e-05, eta: 0:01:15, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0444
+2022-05-11 13:05:23,471 - mmaction - INFO - Saving checkpoint at 23 epochs
+2022-05-11 13:05:48,851 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 13:05:48,851 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 13:05:48,851 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 13:05:48,852 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 13:05:48,852 - mmaction - INFO - Epoch(val) [23][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
+2022-05-11 13:06:21,646 - mmaction - INFO - Epoch [24][40/263]	lr: 3.104e-05, eta: 0:00:59, time: 0.820, data_time: 0.625, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0415
+2022-05-11 13:06:29,232 - mmaction - INFO - Epoch [24][80/263]	lr: 2.095e-05, eta: 0:00:48, time: 0.190, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0014, loss: 0.0014, grad_norm: 0.0456
+2022-05-11 13:06:36,710 - mmaction - INFO - Epoch [24][120/263]	lr: 1.284e-05, eta: 0:00:38, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0024, loss: 0.0024, grad_norm: 0.0880
+2022-05-11 13:06:44,235 - mmaction - INFO - Epoch [24][160/263]	lr: 6.697e-06, eta: 0:00:27, time: 0.188, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0018, loss: 0.0018, grad_norm: 0.0562
+2022-05-11 13:06:51,691 - mmaction - INFO - Epoch [24][200/263]	lr: 2.536e-06, eta: 0:00:16, time: 0.186, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0015, loss: 0.0015, grad_norm: 0.0415
+2022-05-11 13:06:59,158 - mmaction - INFO - Epoch [24][240/263]	lr: 3.567e-07, eta: 0:00:06, time: 0.187, data_time: 0.000, memory: 4810, top1_acc: 1.0000, top5_acc: 1.0000, loss_cls: 0.0017, loss: 0.0017, grad_norm: 0.0555
+2022-05-11 13:07:03,702 - mmaction - INFO - Saving checkpoint at 24 epochs
+2022-05-11 13:07:29,184 - mmaction - INFO - Evaluating top_k_accuracy ...
+2022-05-11 13:07:29,184 - mmaction - INFO - 
+top1_acc	1.0000
+top5_acc	1.0000
+2022-05-11 13:07:29,184 - mmaction - INFO - Evaluating mean_class_accuracy ...
+2022-05-11 13:07:29,184 - mmaction - INFO - 
+mean_acc	1.0000
+2022-05-11 13:07:29,185 - mmaction - INFO - Epoch(val) [24][2]	top1_acc: 1.0000, top5_acc: 1.0000, mean_class_accuracy: 1.0000
